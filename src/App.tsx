@@ -428,10 +428,10 @@ export function App() {
             </div>
             <div className="space-y-1">
               <h2 className="text-xl font-bold text-white font-heading">
-                No Flatmates in Ledger
+                Welcome to KharchaSplit
               </h2>
-              <p className="text-xs text-zinc-400">
-                All data has been cleared. Add your flatmates with their UPI IDs to begin splitting shared expenses, or reload the sample demo.
+              <p className="text-xs text-zinc-400 max-w-sm mx-auto">
+                No flatmates or expenses added yet. Add your flatmates to begin splitting shared expenses, or connect to a multiplayer flat room!
               </p>
             </div>
             <div className="flex items-center justify-center gap-3 pt-2 flex-wrap">
@@ -446,10 +446,10 @@ export function App() {
                 + Add Flatmates
               </button>
               <button
-                onClick={handleLoadDemoData}
+                onClick={() => setIsRoomManagerOpen(true)}
                 className="px-4 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-700 text-xs font-semibold transition-all cursor-pointer"
               >
-                Reload Sample Demo Data
+                + Create or Join Room
               </button>
             </div>
           </div>

@@ -84,7 +84,14 @@ export const DEMO_STATE: AppState = {
   customTags: [],
 };
 
-const STORAGE_KEY = 'kharchasplit_v1_data';
+export const EMPTY_STATE: AppState = {
+  members: [],
+  expenses: [],
+  settledTransactions: [],
+  customTags: [],
+};
+
+const STORAGE_KEY = 'kharchasplit_v2_data';
 
 export function loadInitialState(): AppState {
   // First check if a shared URL state exists in window.location.hash
@@ -92,6 +99,15 @@ export function loadInitialState(): AppState {
   if (urlState) {
     saveStateToLocalStorage(urlState);
     return urlState;
+  }
+
+  // Clear legacy v1 dummy data if previously cached
+  try {
+    if (localStorage.getItem('kharchasplit_v1_data')) {
+      localStorage.removeItem('kharchasplit_v1_data');
+    }
+  } catch {
+    // ignore
   }
 
   // Next check localStorage
@@ -107,8 +123,8 @@ export function loadInitialState(): AppState {
     console.error('Failed to load state from localStorage:', err);
   }
 
-  // Fallback to initial demo state
-  return DEMO_STATE;
+  // Fallback to fresh clean empty state for all new users
+  return EMPTY_STATE;
 }
 
 export function saveStateToLocalStorage(state: AppState): void {
