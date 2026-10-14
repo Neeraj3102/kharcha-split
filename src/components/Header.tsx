@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { Share2, PlusCircle, UserPlus, FileText, Check, Sparkles } from 'lucide-react';
-import type { TimeFilter } from '../types';
+import React from 'react';
+import { Share2, PlusCircle, UserPlus, FileText, Sparkles, Zap, Flame } from 'lucide-react';
+import type { TimeFilter, AppTheme } from '../types';
 
 interface HeaderProps {
   timeFilter: TimeFilter;
@@ -8,9 +8,11 @@ interface HeaderProps {
   onOpenAddExpense: () => void;
   onOpenAddMember: () => void;
   onOpenReport: () => void;
-  onShareLink: () => void;
+  onOpenShareLedger: () => void;
   totalGroupSpend: number;
   activeMemberCount: number;
+  theme: AppTheme;
+  onToggleTheme: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -19,41 +21,66 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenAddExpense,
   onOpenAddMember,
   onOpenReport,
-  onShareLink,
+  onOpenShareLedger,
   totalGroupSpend,
   activeMemberCount,
+  theme,
+  onToggleTheme,
 }) => {
-  const [copied, setCopied] = useState(false);
-
-  const handleShare = () => {
-    onShareLink();
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2500);
-  };
+  const isBumblebee = theme === 'bumblebee';
 
   return (
     <header className="relative w-full pt-6 pb-8 border-b border-white/10">
       {/* Top Bar with Brand & Actions */}
       <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        {/* The Weeknd Inspired Glowing Brand */}
+        {/* Brand with Theme Badge */}
         <div className="flex items-center gap-3">
-          <div className="relative flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-rose-600 via-rose-700 to-amber-600 neon-glow-red p-[1px]">
+          <div
+            className={`relative flex items-center justify-center w-12 h-12 rounded-xl p-[1px] ${
+              isBumblebee
+                ? 'bg-gradient-to-br from-yellow-300 via-amber-400 to-yellow-500 shadow-lg shadow-yellow-950/60'
+                : 'bg-gradient-to-br from-rose-600 via-rose-700 to-amber-600 neon-glow-red'
+            }`}
+          >
             <div className="w-full h-full bg-[#0d0d12] rounded-xl flex items-center justify-center">
-              <span className="font-heading text-2xl font-black text-rose-500 tracking-tighter">₹</span>
+              <span
+                className={`font-heading text-2xl font-black tracking-tighter ${
+                  isBumblebee ? 'text-yellow-400' : 'text-rose-500'
+                }`}
+              >
+                {isBumblebee ? '⚡' : '₹'}
+              </span>
             </div>
             {/* Pulsing micro dot */}
             <span className="absolute -top-1 -right-1 flex h-3 w-3">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-500 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-600"></span>
+              <span
+                className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                  isBumblebee ? 'bg-yellow-400' : 'bg-rose-500'
+                }`}
+              ></span>
+              <span
+                className={`relative inline-flex rounded-full h-3 w-3 ${
+                  isBumblebee ? 'bg-yellow-500' : 'bg-rose-600'
+                }`}
+              ></span>
             </span>
           </div>
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white flex items-center gap-2">
-                KHARCHA<span className="text-rose-500">SPLIT</span>
+                KHARCHA
+                <span className={isBumblebee ? 'text-yellow-400' : 'text-rose-500'}>
+                  SPLIT
+                </span>
               </h1>
-              <span className="text-[10px] uppercase font-mono tracking-widest px-2 py-0.5 rounded-full bg-rose-950/80 text-rose-400 border border-rose-800/60">
-                After Hours
+              <span
+                className={`text-[10px] uppercase font-mono tracking-widest px-2 py-0.5 rounded-full border ${
+                  isBumblebee
+                    ? 'bg-yellow-950/80 text-yellow-400 border-yellow-700/60'
+                    : 'bg-rose-950/80 text-rose-400 border-rose-800/60'
+                }`}
+              >
+                {isBumblebee ? 'Bumblebee' : 'After Hours'}
               </span>
             </div>
             <p className="text-xs text-zinc-400 font-medium">
@@ -64,32 +91,49 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Global Action Buttons */}
         <div className="flex items-center gap-2 flex-wrap">
+          {/* THEME TOGGLE SWITCHER (User Requirement 3) */}
           <button
-            onClick={handleShare}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-zinc-900/80 hover:bg-zinc-800 text-zinc-200 border border-zinc-700/60 transition-all cursor-pointer"
-            title="Copies full flatmate ledger URL (Zero database required!)"
+            onClick={onToggleTheme}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
+              isBumblebee
+                ? 'bg-yellow-950/40 text-yellow-300 border-yellow-700/80 hover:bg-yellow-900/40'
+                : 'bg-rose-950/40 text-rose-300 border-rose-800/80 hover:bg-rose-900/40'
+            }`}
+            title="Toggle between The Weeknd (After Hours) and Bumblebee themes"
           >
-            {copied ? (
+            {isBumblebee ? (
               <>
-                <Check className="w-4 h-4 text-emerald-400" />
-                <span className="text-emerald-400">Copied Link!</span>
+                <Zap className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />
+                <span>Theme: Bumblebee</span>
               </>
             ) : (
               <>
-                <Share2 className="w-4 h-4 text-rose-400" />
-                <span>Share Ledger</span>
+                <Flame className="w-3.5 h-3.5 text-rose-500 fill-rose-500" />
+                <span>Theme: The Weeknd</span>
               </>
             )}
           </button>
 
+          {/* SHARE LEDGER AS PDF / LINK (User Requirement 1) */}
+          <button
+            onClick={onOpenShareLedger}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-zinc-900/80 hover:bg-zinc-800 text-zinc-200 border border-zinc-700/60 transition-all cursor-pointer"
+            title="Export full ledger as PDF or copy shareable link"
+          >
+            <Share2 className={`w-4 h-4 ${isBumblebee ? 'text-yellow-400' : 'text-rose-400'}`} />
+            <span>Share Ledger (PDF)</span>
+          </button>
+
+          {/* WHATSAPP REPORT (User Requirement 1) */}
           <button
             onClick={onOpenReport}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-zinc-900/80 hover:bg-zinc-800 text-zinc-200 border border-zinc-700/60 transition-all cursor-pointer"
           >
-            <FileText className="w-4 h-4 text-amber-400" />
-            <span>WhatsApp Report</span>
+            <FileText className="w-4 h-4 text-emerald-400" />
+            <span>Reports & PDF</span>
           </button>
 
+          {/* FLATMATE MANAGER */}
           <button
             onClick={onOpenAddMember}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-zinc-900/80 hover:bg-zinc-800 text-zinc-200 border border-zinc-700/60 transition-all cursor-pointer"
@@ -98,9 +142,14 @@ export const Header: React.FC<HeaderProps> = ({
             <span>Flatmates ({activeMemberCount})</span>
           </button>
 
+          {/* ADD EXPENSE BUTTON */}
           <button
             onClick={onOpenAddExpense}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white shadow-lg shadow-rose-950/50 hover:shadow-rose-600/30 transition-all cursor-pointer"
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-lg ${
+              isBumblebee
+                ? 'bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-300 hover:to-amber-400 text-zinc-950 shadow-yellow-950/60'
+                : 'bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white shadow-rose-950/50 hover:shadow-rose-600/30'
+            }`}
           >
             <PlusCircle className="w-4 h-4" />
             <span>+ Add Expense</span>
@@ -112,7 +161,13 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="max-w-6xl mx-auto px-4 mt-6">
         <div className="glass-panel rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400">
+            <div
+              className={`p-3 rounded-xl border ${
+                isBumblebee
+                  ? 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400'
+                  : 'bg-rose-500/10 border-rose-500/20 text-rose-400'
+              }`}
+            >
               <Sparkles className="w-6 h-6 animate-pulse" />
             </div>
             <div>
@@ -124,7 +179,7 @@ export const Header: React.FC<HeaderProps> = ({
                   : "This Month's Spend"}
               </div>
               <div className="text-2xl sm:text-3xl font-extrabold text-white font-mono tracking-tight flex items-baseline gap-1">
-                <span className="text-rose-500">₹</span>
+                <span className={isBumblebee ? 'text-yellow-400' : 'text-rose-500'}>₹</span>
                 {totalGroupSpend.toLocaleString('en-IN', {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
@@ -139,7 +194,9 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={() => setTimeFilter('ALL')}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                 timeFilter === 'ALL'
-                  ? 'bg-rose-600 text-white shadow-md shadow-rose-900/40'
+                  ? isBumblebee
+                    ? 'bg-yellow-400 text-zinc-950 font-bold shadow-md shadow-yellow-950'
+                    : 'bg-rose-600 text-white shadow-md shadow-rose-900/40'
                   : 'text-zinc-400 hover:text-white'
               }`}
             >
@@ -149,7 +206,9 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={() => setTimeFilter('THIS_MONTH')}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                 timeFilter === 'THIS_MONTH'
-                  ? 'bg-rose-600 text-white shadow-md shadow-rose-900/40'
+                  ? isBumblebee
+                    ? 'bg-yellow-400 text-zinc-950 font-bold shadow-md shadow-yellow-950'
+                    : 'bg-rose-600 text-white shadow-md shadow-rose-900/40'
                   : 'text-zinc-400 hover:text-white'
               }`}
             >
@@ -159,7 +218,9 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={() => setTimeFilter('THIS_WEEK')}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                 timeFilter === 'THIS_WEEK'
-                  ? 'bg-rose-600 text-white shadow-md shadow-rose-900/40'
+                  ? isBumblebee
+                    ? 'bg-yellow-400 text-zinc-950 font-bold shadow-md shadow-yellow-950'
+                    : 'bg-rose-600 text-white shadow-md shadow-rose-900/40'
                   : 'text-zinc-400 hover:text-white'
               }`}
             >
