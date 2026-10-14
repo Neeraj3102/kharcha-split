@@ -61,6 +61,30 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
 
   if (!isOpen) return null;
 
+  if (members.length === 0) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+        <div className="glass-panel w-full max-w-sm rounded-2xl border border-white/10 p-6 text-center space-y-4">
+          <div className="w-12 h-12 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center mx-auto border border-rose-500/20">
+            <Users className="w-6 h-6" />
+          </div>
+          <div>
+            <h3 className="text-base font-bold text-white font-heading">No Flatmates Yet</h3>
+            <p className="text-xs text-zinc-400 mt-1">
+              Please add at least one flatmate with their UPI ID before creating an expense.
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-full py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold transition-all cursor-pointer"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const totalAmount = parseFloat(amountStr) || 0;
 
   // Toggle member inclusion in Equal Split

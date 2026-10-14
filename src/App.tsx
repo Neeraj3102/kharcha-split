@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Users } from 'lucide-react';
 import type {
   Member,
   Expense,
@@ -11,6 +12,7 @@ import {
   loadInitialState,
   saveStateToLocalStorage,
   DEFAULT_INDIAN_TAGS,
+  DEMO_STATE,
 } from './utils/storage';
 import {
   calculateMinimizedSettlements,
@@ -117,10 +119,6 @@ export function App() {
   };
 
   const handleDeleteMember = (id: string) => {
-    if (state.members.length <= 2) {
-      alert('At least two flatmates are required for splitting.');
-      return;
-    }
     setState((prev) => ({
       ...prev,
       members: prev.members.filter((m) => m.id !== id),
@@ -131,6 +129,23 @@ export function App() {
         (s) => s.fromMemberId !== id && s.toMemberId !== id
       ),
     }));
+  };
+
+  const handleResetAllData = () => {
+    localStorage.removeItem('kharchasplit_v1_data');
+    if (window.location.hash) {
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+    setState({
+      members: [],
+      expenses: [],
+      settledTransactions: [],
+      customTags: [],
+    });
+  };
+
+  const handleLoadDemoData = () => {
+    setState(DEMO_STATE);
   };
 
   const handleAddExpense = (newExpenseData: Omit<Expense, 'id'>) => {
@@ -219,24 +234,56 @@ export function App() {
 
       {/* Main Content Dashboard */}
       <main className="flex-1 max-w-6xl w-full mx-auto px-4 py-8 space-y-10">
-        {/* Section 1: Minimized Settlement Cards with UPI & QR */}
-        <section>
-          <SettlementCards
-            settlements={settlements}
-            members={state.members}
-            onOpenQr={handleOpenQr}
-            onOpenMarkPaid={handleOpenMarkPaid}
-          />
-        </section>
+        {state.members.length === 0 ? (
+          <div className="glass-panel rounded-2xl p-8 sm:p-12 text-center border border-white/10 space-y-4 max-w-xl mx-auto my-8">
+            <div className="w-16 h-16 rounded-2xl bg-rose-500/10 text-rose-500 flex items-center justify-center mx-auto border border-rose-500/20 shadow-lg shadow-rose-950/40">
+              <Users className="w-8 h-8" />
+            </div>
+            <div className="space-y-1">
+              <h2 className="text-xl font-bold text-white font-heading">
+                No Flatmates in Ledger
+              </h2>
+              <p className="text-xs text-zinc-400">
+                All data has been cleared. Add your flatmates with their UPI IDs to begin splitting shared expenses, or reload the sample demo.
+              </p>
+            </div>
+            <div className="flex items-center justify-center gap-3 pt-2 flex-wrap">
+              <button
+                onClick={() => setIsAddMemberOpen(true)}
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white text-xs font-bold transition-all cursor-pointer shadow-lg shadow-rose-950"
+              >
+                + Add Flatmates
+              </button>
+              <button
+                onClick={handleLoadDemoData}
+                className="px-4 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-700 text-xs font-semibold transition-all cursor-pointer"
+              >
+                Reload Sample Demo Data
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Section 1: Minimized Settlement Cards with UPI & QR */}
+            <section>
+              <SettlementCards
+                settlements={settlements}
+                members={state.members}
+                onOpenQr={handleOpenQr}
+                onOpenMarkPaid={handleOpenMarkPaid}
+              />
+            </section>
 
-        {/* Section 2: Chronological Filterable Expense Feed */}
-        <section>
-          <ExpenseList
-            expenses={filteredExpenses}
-            members={state.members}
-            onDeleteExpense={handleDeleteExpense}
-          />
-        </section>
+            {/* Section 2: Chronological Filterable Expense Feed */}
+            <section>
+              <ExpenseList
+                expenses={filteredExpenses}
+                members={state.members}
+                onDeleteExpense={handleDeleteExpense}
+              />
+            </section>
+          </>
+        )}
       </main>
 
       {/* Footer */}
@@ -278,6 +325,8 @@ export function App() {
         netBalances={netBalances}
         onAddMember={handleAddMember}
         onDeleteMember={handleDeleteMember}
+        onResetAllData={handleResetAllData}
+        onLoadDemoData={handleLoadDemoData}
       />
 
       <QRCodeModal
