@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Users, Radio, Copy, Check } from 'lucide-react';
+import { Users, Radio, Copy, Check, ShieldCheck } from 'lucide-react';
 import type {
   Member,
   Expense,
@@ -38,6 +38,7 @@ import { MarkPaidModal } from './components/MarkPaidModal';
 import { ReportModal } from './components/ReportModal';
 import { ShareLedgerModal } from './components/ShareLedgerModal';
 import { RoomManagerModal } from './components/RoomManagerModal';
+import { AdminPortalModal } from './components/AdminPortalModal';
 
 export function App() {
   const [state, setState] = useState<AppState>(loadInitialState);
@@ -66,6 +67,7 @@ export function App() {
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [isShareLedgerOpen, setIsShareLedgerOpen] = useState(false);
   const [isRoomManagerOpen, setIsRoomManagerOpen] = useState(false);
+  const [isAdminPortalOpen, setIsAdminPortalOpen] = useState(false);
 
   // QR Modal state
   const [qrState, setQrState] = useState<{
@@ -100,6 +102,18 @@ export function App() {
       // ignore
     }
   }, [theme]);
+
+  // Open Master Admin Portal via URL hash e.g. #admin
+  useEffect(() => {
+    const checkAdminHash = () => {
+      if (window.location.hash.includes('#admin')) {
+        setIsAdminPortalOpen(true);
+      }
+    };
+    checkAdminHash();
+    window.addEventListener('hashchange', checkAdminHash);
+    return () => window.removeEventListener('hashchange', checkAdminHash);
+  }, []);
 
   // LIVE ROOM SYNC: Listen for real-time updates from other flatmates via WebSockets
   useEffect(() => {
@@ -477,8 +491,19 @@ export function App() {
             <span>Zero Cloud Indian Flatmate Ledger</span>
           </div>
 
-          <div className="text-[11px] text-zinc-500">
-            Split bills fairly • Settle instantly
+          <div className="flex items-center gap-3">
+            <div className="text-[11px] text-zinc-500">
+              Split bills fairly • Settle instantly
+            </div>
+            <span>•</span>
+            <button
+              onClick={() => setIsAdminPortalOpen(true)}
+              className="text-[11px] text-zinc-500 hover:text-rose-400 transition cursor-pointer flex items-center gap-1"
+              title="Super-Admin Master Portal"
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-zinc-600 hover:text-rose-400" />
+              <span>Master Portal</span>
+            </button>
           </div>
         </div>
       </footer>
@@ -546,6 +571,20 @@ export function App() {
         setActiveRoom={setActiveRoom}
         state={state}
         theme={theme}
+      />
+
+      <AdminPortalModal
+        isOpen={isAdminPortalOpen}
+        onClose={() => {
+          setIsAdminPortalOpen(false);
+          if (window.location.hash.includes('#admin')) {
+            window.history.replaceState(null, '', window.location.pathname);
+          }
+        }}
+        theme={theme}
+        onSwitchToRoom={(roomId, roomName) => {
+          setActiveRoom({ roomId, roomName });
+        }}
       />
     </div>
   );

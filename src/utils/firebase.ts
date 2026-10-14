@@ -1,6 +1,6 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import type { FirebaseApp } from 'firebase/app';
-import { getDatabase, ref, onValue, set, get, Database } from 'firebase/database';
+import { getDatabase, ref, onValue, set, get, remove, update, Database } from 'firebase/database';
 import type { Unsubscribe } from 'firebase/database';
 import type { AppState } from '../types';
 
@@ -195,3 +195,129 @@ export async function checkRoomExists(roomId: string): Promise<boolean> {
     return false;
   }
 }
+
+export interface FirebaseRoomData {
+  meta?: {
+    id: string;
+    name: string;
+    updatedAt: string;
+  };
+  state?: AppState;
+}
+
+/**
+ * Super Admin: Listen to all rooms across the platform
+ */
+export function subscribeToAllRooms(
+  onUpdate: (rooms: Record<string, FirebaseRoomData>) => void,
+  onError?: (err: Error) => void
+): Unsubscribe | null {
+  const db = getFirebaseDb();
+  if (!db) return null;
+
+  const allRoomsRef = ref(db, 'kharcha_rooms');
+  return onValue(
+    allRoomsRef,
+    (snapshot) => {
+      const data = snapshot.val() || {};
+      onUpdate(data);
+    },
+    (err) => {
+      console.error('Failed to subscribe to all rooms:', err);
+      if (onError) onError(err);
+    }
+  );
+}
+
+/**
+ * Super Admin: Delete an entire room from Firebase
+ */
+export async function deleteRoom(roomId: string): Promise<boolean> {
+  const db = getFirebaseDb();
+  if (!db) return false;
+
+  try {
+    const roomRef = ref(db, `kharcha_rooms/${roomId}`);
+    await remove(roomRef);
+    return true;
+  } catch (err) {
+    console.error(`Failed to delete room ${roomId}:`, err);
+    return false;
+  }
+}
+
+/**
+ * Super Admin: Delete a specific expense from any room
+ */
+export async function deleteExpenseFromRoom(
+  roomId: string,
+  expenseId: string
+): Promise<boolean> {
+  const db = getFirebaseDb();
+  if (!db) return false;
+
+  try {
+    const snapshot = await get(ref(db, `kharcha_rooms/${roomId}/state/expenses`));
+    if (snapshot.exists()) {
+      const expenses = snapshot.val();
+      if (Array.isArray(expenses)) {
+        const filtered = expenses.filter((e: any) => e.id !== expenseId);
+        await set(ref(db, `kharcha_rooms/${roomId}/state/expenses`), filtered);
+        await update(ref(db, `kharcha_rooms/${roomId}/meta`), {
+          updatedAt: new Date().toISOString(),
+        });
+        return true;
+      }
+    }
+    return false;
+  } catch (err) {
+    console.error(`Failed to delete expense ${expenseId} from room ${roomId}:`, err);
+    return false;
+  }
+}
+
+/**
+ * Super Admin: Remove a specific member from any room
+ */
+export async function deleteMemberFromRoom(
+  roomId: string,
+  memberId: string
+): Promise<boolean> {
+  const db = getFirebaseDb();
+  if (!db) return false;
+
+  try {
+    const snapshot = await get(ref(db, `kharcha_rooms/${roomId}/state/members`));
+    if (snapshot.exists()) {
+      const members = snapshot.val();
+      if (Array.isArray(members)) {
+        const filtered = members.filter((m: any) => m.id !== memberId);
+        await set(ref(db, `kharcha_rooms/${roomId}/state/members`), filtered);
+        await update(ref(db, `kharcha_rooms/${roomId}/meta`), {
+          updatedAt: new Date().toISOString(),
+        });
+        return true;
+      }
+    }
+    return false;
+  } catch (err) {
+    console.error(`Failed to delete member ${memberId} from room ${roomId}:`, err);
+    return false;
+  }
+}
+
+const MASTER_ID_KEY = 'kharchasplit_master_id';
+const MASTER_PASS_KEY = 'kharchasplit_master_pass';
+
+export function getMasterCredentials(): { id: string; pass: string } {
+  return {
+    id: localStorage.getItem(MASTER_ID_KEY) || 'Neeraj',
+    pass: localStorage.getItem(MASTER_PASS_KEY) || '696969',
+  };
+}
+
+export function saveMasterCredentials(id: string, pass: string): void {
+  localStorage.setItem(MASTER_ID_KEY, id);
+  localStorage.setItem(MASTER_PASS_KEY, pass);
+}
+
