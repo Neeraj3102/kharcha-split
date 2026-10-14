@@ -84,7 +84,7 @@ export const Header: React.FC<HeaderProps> = ({
                     : 'bg-rose-950/80 text-rose-400 border-rose-800/60'
                 }`}
               >
-                {isBumblebee ? 'Bumblebee' : 'After Hours'}
+                {isBumblebee ? 'Bumblebee' : 'Crimson Dark'}
               </span>
             </div>
             <p className="text-xs text-zinc-400 font-medium">
@@ -103,7 +103,7 @@ export const Header: React.FC<HeaderProps> = ({
                 ? 'bg-yellow-950/40 text-yellow-300 border-yellow-700/80 hover:bg-yellow-900/40'
                 : 'bg-rose-950/40 text-rose-300 border-rose-800/80 hover:bg-rose-900/40'
             }`}
-            title="Toggle between The Weeknd (After Hours) and Bumblebee themes"
+            title="Toggle between Crimson Dark and Bumblebee themes"
           >
             {isBumblebee ? (
               <>
@@ -113,7 +113,7 @@ export const Header: React.FC<HeaderProps> = ({
             ) : (
               <>
                 <Flame className="w-3.5 h-3.5 text-rose-500 fill-rose-500" />
-                <span>Theme: The Weeknd</span>
+                <span>Theme: Crimson Dark</span>
               </>
             )}
           </button>
