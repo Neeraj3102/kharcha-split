@@ -1,5 +1,5 @@
 import React from 'react';
-import { Share2, PlusCircle, UserPlus, FileText, Sparkles, Zap, Flame } from 'lucide-react';
+import { Share2, PlusCircle, UserPlus, FileText, Sparkles, Zap, Flame, Users } from 'lucide-react';
 import type { TimeFilter, AppTheme } from '../types';
 
 interface HeaderProps {
@@ -9,6 +9,8 @@ interface HeaderProps {
   onOpenAddMember: () => void;
   onOpenReport: () => void;
   onOpenShareLedger: () => void;
+  onOpenRoomManager: () => void;
+  activeRoom: { roomId: string; roomName: string } | null;
   totalGroupSpend: number;
   activeMemberCount: number;
   theme: AppTheme;
@@ -22,6 +24,8 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenAddMember,
   onOpenReport,
   onOpenShareLedger,
+  onOpenRoomManager,
+  activeRoom,
   totalGroupSpend,
   activeMemberCount,
   theme,
@@ -91,7 +95,7 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Global Action Buttons */}
         <div className="flex items-center gap-2 flex-wrap">
-          {/* THEME TOGGLE SWITCHER (User Requirement 3) */}
+          {/* THEME TOGGLE SWITCHER */}
           <button
             onClick={onToggleTheme}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
@@ -114,7 +118,21 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </button>
 
-          {/* SHARE LEDGER AS PDF / LINK (User Requirement 1) */}
+          {/* MULTIPLAYER FLAT ROOM BUTTON */}
+          <button
+            onClick={onOpenRoomManager}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+              activeRoom
+                ? 'bg-emerald-950/60 border-emerald-700/80 text-emerald-300 hover:bg-emerald-900/50'
+                : 'bg-zinc-900/80 hover:bg-zinc-800 text-zinc-200 border-zinc-700/60'
+            }`}
+            title="Manage shared flat room and invite links"
+          >
+            <Users className="w-3.5 h-3.5 text-emerald-400" />
+            <span>{activeRoom ? `${activeRoom.roomId}` : 'Flat Room'}</span>
+          </button>
+
+          {/* SHARE LEDGER AS PDF / LINK */}
           <button
             onClick={onOpenShareLedger}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-zinc-900/80 hover:bg-zinc-800 text-zinc-200 border border-zinc-700/60 transition-all cursor-pointer"
@@ -124,7 +142,7 @@ export const Header: React.FC<HeaderProps> = ({
             <span>Share Ledger (PDF)</span>
           </button>
 
-          {/* WHATSAPP REPORT (User Requirement 1) */}
+          {/* WHATSAPP REPORT */}
           <button
             onClick={onOpenReport}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-zinc-900/80 hover:bg-zinc-800 text-zinc-200 border border-zinc-700/60 transition-all cursor-pointer"
