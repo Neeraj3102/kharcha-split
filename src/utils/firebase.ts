@@ -17,20 +17,19 @@ export interface FirebaseConfig {
 const CONFIG_STORAGE_KEY = 'kharchasplit_firebase_config';
 const ACTIVE_ROOM_KEY = 'kharchasplit_active_room';
 
-// Default config from environment variables if provided
-export function getStoredFirebaseConfig(): FirebaseConfig | null {
-  // 1. Check environment variables
-  if (import.meta.env.VITE_FIREBASE_API_KEY && import.meta.env.VITE_FIREBASE_DATABASE_URL) {
-    return {
-      apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-      authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || '',
-      databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL,
-      projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || '',
-      appId: import.meta.env.VITE_FIREBASE_APP_ID || '',
-    };
-  }
+const DEFAULT_FIREBASE_CONFIG: FirebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'AIzaSyB-lpluRQZQ2g0dwGfCxo3Kn1mJ-8F0Wco',
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'kharchasplit-cee56.firebaseapp.com',
+  databaseURL:
+    import.meta.env.VITE_FIREBASE_DATABASE_URL ||
+    'https://kharchasplit-cee56-default-rtdb.asia-southeast1.firebasedatabase.app',
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'kharchasplit-cee56',
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || '1:976932700270:web:1b5aa06e059a603091267f',
+};
 
-  // 2. Check localStorage
+// Default config from environment variables or project defaults
+export function getStoredFirebaseConfig(): FirebaseConfig {
+  // 1. Check localStorage for admin overrides
   try {
     const saved = localStorage.getItem(CONFIG_STORAGE_KEY);
     if (saved) {
@@ -40,7 +39,8 @@ export function getStoredFirebaseConfig(): FirebaseConfig | null {
     console.error('Failed to parse Firebase config:', err);
   }
 
-  return null;
+  // 2. Fallback to project defaults
+  return DEFAULT_FIREBASE_CONFIG;
 }
 
 export function saveFirebaseConfig(config: FirebaseConfig): void {
