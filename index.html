@@ -15,11 +15,11 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Syne:wght@700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     <style>
-      /* Suppress Netlify injected floating badge */
+      /* Suppress Netlify injected floating badge and any edge iframes */
+      iframe,
       [id*="netlify"],
       [class*="netlify"],
       [data-netlify-badge],
-      iframe[src*="netlify"],
       div[class*="netlify-badge"],
       div[id*="netlify-badge"],
       netlify-badge,
@@ -28,36 +28,36 @@
         visibility: hidden !important;
         opacity: 0 !important;
         pointer-events: none !important;
+        height: 0 !important;
+        width: 0 !important;
+        position: fixed !important;
+        top: -9999px !important;
+        left: -9999px !important;
       }
     </style>
     <script>
       (function() {
-        function removeNetlifyBadge() {
+        function removeNetlifyElements() {
           try {
-            document.querySelectorAll('*').forEach(function(el) {
-              if (el.id === 'root') return;
-              var text = (el.innerText || el.textContent || '').trim();
-              if (text === 'Powered by Netlify' || (text.indexOf('Powered by Netlify') !== -1 && text.length < 50)) {
-                var p = el;
-                while (p.parentElement && p.parentElement !== document.body) {
-                  p = p.parentElement;
-                }
-                if (p && p !== document.body && p.id !== 'root') {
-                  p.style.display = 'none';
-                  p.remove();
-                }
+            // Remove any iframe injected by Netlify
+            var iframes = document.querySelectorAll('iframe');
+            for (var j = 0; j < iframes.length; j++) {
+              iframes[j].remove();
+            }
+
+            // Remove any body-level injected overlay other than our React root
+            var bodyChildren = document.body ? document.body.children : [];
+            for (var k = 0; k < bodyChildren.length; k++) {
+              var child = bodyChildren[k];
+              if (child && child.id !== 'root' && child.tagName !== 'SCRIPT' && child.tagName !== 'STYLE') {
+                child.style.display = 'none';
+                child.remove();
               }
-            });
-            document.querySelectorAll('body > *:not(#root):not(script):not(style)').forEach(function(node) {
-              if ((node.textContent || '').indexOf('Netlify') !== -1) {
-                node.style.display = 'none';
-                node.remove();
-              }
-            });
+            }
           } catch(e) {}
         }
-        setInterval(removeNetlifyBadge, 350);
-        window.addEventListener('DOMContentLoaded', removeNetlifyBadge);
+        setInterval(removeNetlifyElements, 250);
+        window.addEventListener('DOMContentLoaded', removeNetlifyElements);
       })();
     </script>
   </head>

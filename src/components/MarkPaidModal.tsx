@@ -61,7 +61,7 @@ export const MarkPaidModal: React.FC<MarkPaidModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
       <div className="glass-panel w-full max-w-md rounded-2xl border border-white/10 shadow-2xl overflow-hidden p-6 space-y-5">
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-white/10">

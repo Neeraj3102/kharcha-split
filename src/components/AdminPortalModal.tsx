@@ -227,8 +227,8 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
   const selectedRoomData = selectedRoomId ? rooms[selectedRoomId] : null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md">
-      <div className="glass-panel w-full max-w-4xl rounded-2xl border border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+    <div className="fixed inset-0 z-[110] flex items-center justify-center p-2 sm:p-4 bg-black/85 backdrop-blur-md">
+      <div className="glass-panel w-full max-w-4xl rounded-2xl border border-white/10 shadow-2xl overflow-hidden flex flex-col h-[94vh] sm:h-auto sm:max-h-[92vh]">
         {/* MODAL HEADER */}
         <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -364,7 +364,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
           </div>
         ) : (
           /* VIEW 2: AUTHENTICATED SUPER-ADMIN DASHBOARD */
-          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 pb-32 sm:pb-8">
             {/* TOP BAR WITH CLOUD STATUS & CONTROLS */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-zinc-900/90 border border-white/10">
               <div className="flex items-center gap-2.5">
@@ -797,19 +797,19 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                             </div>
                           </div>
 
-                          <div className="flex items-center justify-between gap-2 pt-2 border-t border-white/5">
+                          <div className="flex items-center justify-between gap-2 pt-2.5 border-t border-white/5 flex-wrap">
                             <button
                               onClick={() => setSelectedRoomId(roomId)}
-                              className="px-3 py-1.5 rounded-lg text-xs font-semibold text-zinc-200 hover:text-white bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 transition cursor-pointer flex items-center gap-1.5"
+                              className="px-3 py-2 rounded-xl text-xs font-semibold text-zinc-200 hover:text-white bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 transition cursor-pointer flex items-center gap-1.5 active:scale-95"
                             >
                               <Search className="w-3.5 h-3.5" />
                               <span>Inspect Data</span>
                             </button>
 
-                            <div className="flex items-center gap-1.5">
+                            <div className="flex items-center gap-2">
                               <button
                                 onClick={() => handleJumpIntoRoom(roomId, roomName)}
-                                className="px-2.5 py-1.5 rounded-lg text-xs font-bold text-zinc-950 bg-white hover:bg-zinc-200 transition cursor-pointer flex items-center gap-1"
+                                className="px-3.5 py-2 rounded-xl text-xs font-bold text-zinc-950 bg-white hover:bg-zinc-200 transition cursor-pointer flex items-center gap-1 shadow-sm active:scale-95"
                                 title="Open this room directly on your dashboard"
                               >
                                 <ExternalLink className="w-3.5 h-3.5" />
@@ -819,7 +819,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                               <button
                                 onClick={() => handleDeleteRoom(roomId, roomName)}
                                 disabled={isDeleting === roomId}
-                                className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-rose-950/50 transition cursor-pointer"
+                                className="p-2 rounded-xl text-zinc-400 hover:text-rose-400 hover:bg-rose-950/60 border border-transparent hover:border-rose-900/50 transition cursor-pointer active:scale-95"
                                 title="Permanently delete room"
                               >
                                 <Trash2 className="w-4 h-4" />

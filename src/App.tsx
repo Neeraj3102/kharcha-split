@@ -277,6 +277,17 @@ export function App() {
     state.settledTransactions
   );
 
+  // Check if any modal is currently open to hide the bottom mobile navigation bar
+  const isAnyModalOpen =
+    isAddExpenseOpen ||
+    isAddMemberOpen ||
+    isReportOpen ||
+    isShareLedgerOpen ||
+    isRoomManagerOpen ||
+    isAdminPortalOpen ||
+    qrState.isOpen ||
+    !!markPaidSettlement;
+
   // Handlers
   const handleAddMember = (newMemberData: Omit<Member, 'id'>) => {
     const newMember: Member = {
@@ -656,58 +667,60 @@ export function App() {
         </div>
       </footer>
 
-      {/* MOBILE STICKY BOTTOM NAVIGATION BAR (Thumb Friendly on iOS & Android) */}
-      <nav aria-label="Mobile Navigation" className="sm:hidden fixed bottom-0 left-0 right-0 z-[100] bg-[#0d0d12]/95 backdrop-blur-xl border-t border-white/10 px-3 py-2 pb-safe shadow-[0_-4px_24px_rgba(0,0,0,0.7)]">
-        <div className="flex items-center justify-around gap-1 max-w-md mx-auto">
-          {/* 1. Flat Room */}
-          <button
-            onClick={() => setIsRoomManagerOpen(true)}
-            className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all cursor-pointer ${
-              activeRoom
-                ? 'text-emerald-400 hover:text-emerald-300'
-                : 'text-zinc-400 hover:text-white'
-            }`}
-          >
-            <Building2 className="w-4 h-4" />
-            <span className="text-[10px] font-medium mt-0.5 truncate max-w-[64px]">
-              {activeRoom ? `#${activeRoom.roomId}` : 'Rooms'}
-            </span>
-          </button>
+      {/* MOBILE STICKY BOTTOM NAVIGATION BAR (Thumb Friendly on iOS & Android) - ONLY VISIBLE WHEN NO MODAL IS ACTIVE */}
+      {!isAnyModalOpen && (
+        <nav aria-label="Mobile Navigation" className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#0d0d12]/95 backdrop-blur-xl border-t border-white/10 px-3 py-2 pb-safe shadow-[0_-4px_24px_rgba(0,0,0,0.7)]">
+          <div className="flex items-center justify-around gap-1 max-w-md mx-auto">
+            {/* 1. Flat Room */}
+            <button
+              onClick={() => setIsRoomManagerOpen(true)}
+              className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all cursor-pointer ${
+                activeRoom
+                  ? 'text-emerald-400 hover:text-emerald-300'
+                  : 'text-zinc-400 hover:text-white'
+              }`}
+            >
+              <Building2 className="w-4 h-4" />
+              <span className="text-[10px] font-medium mt-0.5 truncate max-w-[64px]">
+                {activeRoom ? `#${activeRoom.roomId}` : 'Rooms'}
+              </span>
+            </button>
 
-          {/* 2. Flatmates */}
-          <button
-            onClick={() => setIsAddMemberOpen(true)}
-            className="flex flex-col items-center justify-center py-1 px-2.5 rounded-xl text-zinc-400 hover:text-white transition-all cursor-pointer relative"
-          >
-            <Users className="w-4 h-4" />
-            <span className="text-[10px] font-medium mt-0.5">
-              Flatmates ({state.members.length})
-            </span>
-          </button>
+            {/* 2. Flatmates */}
+            <button
+              onClick={() => setIsAddMemberOpen(true)}
+              className="flex flex-col items-center justify-center py-1 px-2.5 rounded-xl text-zinc-400 hover:text-white transition-all cursor-pointer relative"
+            >
+              <Users className="w-4 h-4" />
+              <span className="text-[10px] font-medium mt-0.5">
+                Flatmates ({state.members.length})
+              </span>
+            </button>
 
-          {/* 3. Center CTA: + Add Expense */}
-          <button
-            onClick={() => setIsAddExpenseOpen(true)}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-extrabold shadow-lg transition-all cursor-pointer active:scale-95 ${
-              isBumblebee
-                ? 'bg-gradient-to-r from-yellow-400 to-amber-500 text-zinc-950 shadow-yellow-950/60'
-                : 'bg-gradient-to-r from-rose-600 via-rose-700 to-amber-600 text-white shadow-rose-950/80'
-            }`}
-          >
-            <Plus className="w-4 h-4" />
-            <span>Expense</span>
-          </button>
+            {/* 3. Center CTA: + Add Expense */}
+            <button
+              onClick={() => setIsAddExpenseOpen(true)}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-extrabold shadow-lg transition-all cursor-pointer active:scale-95 ${
+                isBumblebee
+                  ? 'bg-gradient-to-r from-yellow-400 to-amber-500 text-zinc-950 shadow-yellow-950/60'
+                  : 'bg-gradient-to-r from-rose-600 via-rose-700 to-amber-600 text-white shadow-rose-950/80'
+              }`}
+            >
+              <Plus className="w-4 h-4" />
+              <span>Expense</span>
+            </button>
 
-          {/* 4. WhatsApp / Export Report */}
-          <button
-            onClick={() => setIsReportOpen(true)}
-            className="flex flex-col items-center justify-center py-1 px-2.5 rounded-xl text-zinc-400 hover:text-white transition-all cursor-pointer"
-          >
-            <FileText className="w-4 h-4 text-emerald-400" />
-            <span className="text-[10px] font-medium mt-0.5">Report</span>
-          </button>
-        </div>
-      </nav>
+            {/* 4. WhatsApp / Export Report */}
+            <button
+              onClick={() => setIsReportOpen(true)}
+              className="flex flex-col items-center justify-center py-1 px-2.5 rounded-xl text-zinc-400 hover:text-white transition-all cursor-pointer"
+            >
+              <FileText className="w-4 h-4 text-emerald-400" />
+              <span className="text-[10px] font-medium mt-0.5">Report</span>
+            </button>
+          </div>
+        </nav>
+      )}
 
       {/* MODALS */}
       <AddExpenseModal
