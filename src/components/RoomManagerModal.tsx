@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   X,
   Users,
@@ -28,6 +28,7 @@ import {
   clearActiveRoom,
   saveRoomAdminKey,
   claimRoomAdminKey,
+  subscribeToAllRooms,
 } from '../utils/firebase';
 import type { FirebaseConfig, RoomMeta } from '../utils/firebase';
 
@@ -54,8 +55,28 @@ export const RoomManagerModal: React.FC<RoomManagerModalProps> = ({
   onAdminClaimed,
 }) => {
   const [tab, setTab] = useState<'INVITE' | 'CREATE' | 'JOIN' | 'CONFIG'>(
-    activeRoom ? 'INVITE' : 'CREATE'
+    activeRoom ? 'INVITE' : 'JOIN'
   );
+
+  // Realtime discovery of rooms in Firebase for 1-tap mobile joining
+  const [cloudRooms, setCloudRooms] = useState<
+    Array<{ id: string; name: string; memberCount: number }>
+  >([]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const unsub = subscribeToAllRooms((all) => {
+      const list = Object.entries(all).map(([id, r]) => ({
+        id,
+        name: r.meta?.name || `Flat ${id}`,
+        memberCount: (r.state?.members || []).length,
+      }));
+      setCloudRooms(list);
+    });
+    return () => {
+      if (unsub) unsub();
+    };
+  }, [isOpen]);
 
   // Create Room State
   const [newRoomName, setNewRoomName] = useState('');
@@ -547,36 +568,87 @@ export const RoomManagerModal: React.FC<RoomManagerModalProps> = ({
 
           {/* TAB 3: JOIN EXISTING ROOM */}
           {tab === 'JOIN' && (
-            <form onSubmit={handleJoinRoom} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-zinc-300 mb-1">
-                  Enter Room Code
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. FLAT-402 or KORA-101"
-                  value={joinCode}
-                  onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-                  className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-700 text-white text-xs font-mono font-bold placeholder-zinc-500 focus:outline-none focus:border-rose-500 uppercase"
-                />
-              </div>
+            <div className="space-y-4">
+              {cloudRooms.length > 0 && (
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-emerald-400 flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                      <span>Discovered Flat Rooms in Cloud:</span>
+                    </label>
+                    <span className="text-[10px] text-zinc-500">Tap to join instantly</span>
+                  </div>
 
-              <p className="text-[11px] text-zinc-400">
-                Ask your flatmate for their room code or click the invite link they sent you.
-              </p>
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {cloudRooms.map((room) => (
+                      <div
+                        key={room.id}
+                        className="p-3 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-between gap-3 hover:border-zinc-700 transition-all"
+                      >
+                        <div>
+                          <div className="text-xs font-bold text-white flex items-center gap-2">
+                            <span>#{room.id}</span>
+                            <span className="text-zinc-400 font-normal">({room.name})</span>
+                          </div>
+                          <div className="text-[10px] text-zinc-500 mt-0.5">
+                            {room.memberCount} flatmates registered
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            saveActiveRoomId(room.id, room.name);
+                            setActiveRoom({ roomId: room.id, roomName: room.name });
+                            setStatusMsg({ text: `Connected to room #${room.id}! Syncing live data...` });
+                            setTimeout(onClose, 800);
+                          }}
+                          className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all cursor-pointer shadow-sm active:scale-95"
+                        >
+                          Join Now
+                        </button>
+                      </div>
+                    ))}
+                  </div>
 
-              <button
-                type="submit"
-                className={`w-full py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md ${
-                  isBumblebee
-                    ? 'bg-gradient-to-r from-yellow-400 to-amber-500 text-zinc-950 hover:from-yellow-300'
-                    : 'bg-gradient-to-r from-rose-600 to-rose-700 text-white hover:from-rose-500'
-                }`}
-              >
-                <LogIn className="w-4 h-4" />
-                <span>Join & Sync Ledger</span>
-              </button>
-            </form>
+                  <div className="flex items-center gap-2 my-2 text-zinc-600">
+                    <div className="h-[1px] flex-1 bg-zinc-800"></div>
+                    <span className="text-[10px] uppercase font-mono tracking-wider">or enter room code manually</span>
+                    <div className="h-[1px] flex-1 bg-zinc-800"></div>
+                  </div>
+                </div>
+              )}
+
+              <form onSubmit={handleJoinRoom} className="space-y-3">
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-300 mb-1">
+                    Room Code
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 710 or FLAT-402"
+                    value={joinCode}
+                    onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                    className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-700 text-white text-xs font-mono font-bold placeholder-zinc-500 focus:outline-none focus:border-rose-500 uppercase"
+                  />
+                </div>
+
+                <p className="text-[11px] text-zinc-400">
+                  Ask your flatmate for their room code or tap the invite link sent via WhatsApp.
+                </p>
+
+                <button
+                  type="submit"
+                  className={`w-full py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md ${
+                    isBumblebee
+                      ? 'bg-gradient-to-r from-yellow-400 to-amber-500 text-zinc-950 hover:from-yellow-300'
+                      : 'bg-gradient-to-r from-rose-600 to-rose-700 text-white hover:from-rose-500'
+                  }`}
+                >
+                  <LogIn className="w-4 h-4" />
+                  <span>Join & Sync Ledger</span>
+                </button>
+              </form>
+            </div>
           )}
 
           {/* TAB 4: FIREBASE CLOUD SETUP (LOCKED BEHIND ADMIN PASSCODE) */}

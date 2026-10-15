@@ -23,7 +23,9 @@ import { generateUpiQrCode } from './utils/upi';
 import { compressStateToUrl } from './utils/urlState';
 import {
   getActiveRoomId,
+  saveActiveRoomId,
   subscribeToRoomState,
+  subscribeToAllRooms,
   pushRoomState,
   getRoomAdminKey,
 } from './utils/firebase';
@@ -183,6 +185,42 @@ export function App() {
       if (unsubscribe) unsubscribe();
     };
   }, [activeRoom?.roomId]);
+
+  // Discover active cloud rooms for seamless 1-tap joining when opening on a new device (like a phone)
+  const [discoveredRooms, setDiscoveredRooms] = useState<
+    Array<{ id: string; name: string; memberCount: number; spend: number }>
+  >([]);
+
+  useEffect(() => {
+    if (activeRoom) {
+      setDiscoveredRooms([]);
+      return;
+    }
+
+    const unsub = subscribeToAllRooms(
+      (allRooms) => {
+        const list = Object.entries(allRooms).map(([id, r]) => {
+          const members = r.state?.members || [];
+          const expenses = r.state?.expenses || [];
+          const totalSpend = expenses.reduce((sum, e) => sum + (e.totalAmount || 0), 0);
+          return {
+            id,
+            name: r.meta?.name || `Flat ${id}`,
+            memberCount: members.length,
+            spend: totalSpend,
+          };
+        });
+        setDiscoveredRooms(list);
+      },
+      (err) => {
+        console.warn('Discovery rooms error:', err);
+      }
+    );
+
+    return () => {
+      if (unsub) unsub();
+    };
+  }, [activeRoom]);
 
   // Helper to sync local changes to the shared room
   const syncToCloud = useCallback((newState: AppState) => {
@@ -455,23 +493,56 @@ export function App() {
             </div>
           </div>
         ) : (
-          <div className="glass-panel rounded-xl px-4 py-2.5 flex items-center justify-between gap-3 border border-amber-900/40 bg-amber-950/15 text-xs">
-            <div className="flex items-center gap-2 text-zinc-300">
-              <Radio className="w-4 h-4 text-amber-400 shrink-0" />
-              <span>
-                <strong>Working in Local Mode:</strong> Changes are saved only on this device.
-              </span>
+          <div className="glass-panel rounded-xl p-3.5 sm:p-4 border border-amber-900/40 bg-amber-950/15 text-xs space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5 text-zinc-300">
+                <Radio className="w-4 h-4 text-amber-400 shrink-0 animate-pulse" />
+                <div>
+                  <strong className="text-white block sm:inline">Working in Local Mode:</strong>{' '}
+                  <span className="text-zinc-400">
+                    Changes are saved only on this device.
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsRoomManagerOpen(true)}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-sm shrink-0 ${
+                  isBumblebee
+                    ? 'bg-yellow-400 text-zinc-950 hover:bg-yellow-300'
+                    : 'bg-rose-600 text-white hover:bg-rose-500'
+                }`}
+              >
+                + Create or Join Shared Flat Room
+              </button>
             </div>
-            <button
-              onClick={() => setIsRoomManagerOpen(true)}
-              className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-sm ${
-                isBumblebee
-                  ? 'bg-yellow-400 text-zinc-950 hover:bg-yellow-300'
-                  : 'bg-rose-600 text-white hover:bg-rose-500'
-              }`}
-            >
-              + Create or Join Shared Flat Room
-            </button>
+
+            {discoveredRooms.length > 0 && (
+              <div className="pt-2.5 border-t border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                <span className="text-[11px] text-zinc-300 font-semibold flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                  <span>Active Cloud Rooms Found:</span>
+                </span>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {discoveredRooms.map((room) => (
+                    <button
+                      key={room.id}
+                      onClick={() => {
+                        saveActiveRoomId(room.id, room.name);
+                        setActiveRoom({ roomId: room.id, roomName: room.name });
+                      }}
+                      className="px-3 py-1.5 rounded-lg bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-700/60 text-emerald-300 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-sm active:scale-95"
+                      title="1-tap join this cloud room"
+                    >
+                      <span>Join #{room.id}</span>
+                      <span className="text-[10px] text-emerald-400/80 font-normal">
+                        ({room.name} • {room.memberCount} flatmates)
+                      </span>
+                      <span>➜</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -586,7 +657,7 @@ export function App() {
       </footer>
 
       {/* MOBILE STICKY BOTTOM NAVIGATION BAR (Thumb Friendly on iOS & Android) */}
-      <nav aria-label="Mobile Navigation" className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#0d0d12]/95 backdrop-blur-xl border-t border-white/10 px-3 py-2 pb-safe shadow-[0_-4px_24px_rgba(0,0,0,0.7)]">
+      <nav aria-label="Mobile Navigation" className="sm:hidden fixed bottom-0 left-0 right-0 z-[100] bg-[#0d0d12]/95 backdrop-blur-xl border-t border-white/10 px-3 py-2 pb-safe shadow-[0_-4px_24px_rgba(0,0,0,0.7)]">
         <div className="flex items-center justify-around gap-1 max-w-md mx-auto">
           {/* 1. Flat Room */}
           <button
