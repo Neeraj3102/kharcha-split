@@ -223,7 +223,15 @@ export const MemberManager: React.FC<MemberManagerProps> = ({
 
                         {/* Can delete individual flatmates */}
                         <button
-                          onClick={() => onDeleteMember(member.id)}
+                          onClick={() => {
+                            if (
+                              window.confirm(
+                                `Remove flatmate "${member.name}"?\n\n⚠️ Note: This removes ${member.name} from the flatmate list.\n\n💡 Tip: If you only want to delete a single expense/bill, cancel this and click the trash can icon on that expense in the Expense Feed instead.`
+                              )
+                            ) {
+                              onDeleteMember(member.id);
+                            }
+                          }}
                           className="p-1.5 rounded-lg text-zinc-500 hover:text-rose-400 hover:bg-rose-950/40 transition-all cursor-pointer"
                           title="Remove Flatmate"
                         >
