@@ -93,12 +93,12 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Global Action Buttons */}
-        <div className="flex items-center gap-2 flex-wrap">
+        {/* Global Action Buttons - Horizontal Swipe on Mobile, Wrap on Desktop */}
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap">
           {/* THEME TOGGLE SWITCHER */}
           <button
             onClick={onToggleTheme}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold border transition-all cursor-pointer shrink-0 ${
               isBumblebee
                 ? 'bg-yellow-950/40 text-yellow-300 border-yellow-700/80 hover:bg-yellow-900/40'
                 : 'bg-rose-950/40 text-rose-300 border-rose-800/80 hover:bg-rose-900/40'
@@ -108,12 +108,12 @@ export const Header: React.FC<HeaderProps> = ({
             {isBumblebee ? (
               <>
                 <Zap className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />
-                <span>Theme: Bumblebee</span>
+                <span>Bumblebee</span>
               </>
             ) : (
               <>
                 <Flame className="w-3.5 h-3.5 text-rose-500 fill-rose-500" />
-                <span>Theme: Crimson Dark</span>
+                <span>Crimson</span>
               </>
             )}
           </button>
@@ -121,7 +121,7 @@ export const Header: React.FC<HeaderProps> = ({
           {/* MULTIPLAYER FLAT ROOM BUTTON */}
           <button
             onClick={onOpenRoomManager}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold border transition-all cursor-pointer shrink-0 ${
               activeRoom
                 ? 'bg-emerald-950/60 border-emerald-700/80 text-emerald-300 hover:bg-emerald-900/50'
                 : 'bg-zinc-900/80 hover:bg-zinc-800 text-zinc-200 border-zinc-700/60'
@@ -129,32 +129,13 @@ export const Header: React.FC<HeaderProps> = ({
             title="Manage shared flat room and invite links"
           >
             <Users className="w-3.5 h-3.5 text-emerald-400" />
-            <span>{activeRoom ? `${activeRoom.roomId}` : 'Flat Room'}</span>
-          </button>
-
-          {/* SHARE LEDGER AS PDF / LINK */}
-          <button
-            onClick={onOpenShareLedger}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-zinc-900/80 hover:bg-zinc-800 text-zinc-200 border border-zinc-700/60 transition-all cursor-pointer"
-            title="Export full ledger as PDF or copy shareable link"
-          >
-            <Share2 className={`w-4 h-4 ${isBumblebee ? 'text-yellow-400' : 'text-rose-400'}`} />
-            <span>Share Ledger (PDF)</span>
-          </button>
-
-          {/* WHATSAPP REPORT */}
-          <button
-            onClick={onOpenReport}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-zinc-900/80 hover:bg-zinc-800 text-zinc-200 border border-zinc-700/60 transition-all cursor-pointer"
-          >
-            <FileText className="w-4 h-4 text-emerald-400" />
-            <span>Reports & PDF</span>
+            <span>{activeRoom ? `Flat #${activeRoom.roomId}` : 'Flat Rooms'}</span>
           </button>
 
           {/* FLATMATE MANAGER */}
           <button
             onClick={onOpenAddMember}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-zinc-900/80 hover:bg-zinc-800 text-zinc-200 border border-zinc-700/60 transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-zinc-900/80 hover:bg-zinc-800 text-zinc-200 border border-zinc-700/60 transition-all cursor-pointer shrink-0"
           >
             <UserPlus className="w-4 h-4 text-zinc-300" />
             <span>Flatmates ({activeMemberCount})</span>
@@ -163,7 +144,7 @@ export const Header: React.FC<HeaderProps> = ({
           {/* ADD EXPENSE BUTTON */}
           <button
             onClick={onOpenAddExpense}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-lg ${
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-lg shrink-0 ${
               isBumblebee
                 ? 'bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-300 hover:to-amber-400 text-zinc-950 shadow-yellow-950/60'
                 : 'bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white shadow-rose-950/50 hover:shadow-rose-600/30'
@@ -172,31 +153,50 @@ export const Header: React.FC<HeaderProps> = ({
             <PlusCircle className="w-4 h-4" />
             <span>+ Add Expense</span>
           </button>
+
+          {/* SHARE LEDGER AS PDF / LINK */}
+          <button
+            onClick={onOpenShareLedger}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-zinc-900/80 hover:bg-zinc-800 text-zinc-200 border border-zinc-700/60 transition-all cursor-pointer shrink-0"
+            title="Export full ledger as PDF or copy shareable link"
+          >
+            <Share2 className={`w-4 h-4 ${isBumblebee ? 'text-yellow-400' : 'text-rose-400'}`} />
+            <span>PDF Export</span>
+          </button>
+
+          {/* WHATSAPP REPORT */}
+          <button
+            onClick={onOpenReport}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-zinc-900/80 hover:bg-zinc-800 text-zinc-200 border border-zinc-700/60 transition-all cursor-pointer shrink-0"
+          >
+            <FileText className="w-4 h-4 text-emerald-400" />
+            <span>WhatsApp Report</span>
+          </button>
         </div>
       </div>
 
       {/* Hero Stats & Timeline Filter */}
-      <div className="max-w-6xl mx-auto px-4 mt-6">
+      <div className="max-w-6xl mx-auto px-4 mt-4 sm:mt-6">
         <div className="glass-panel rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3.5">
             <div
-              className={`p-3 rounded-xl border ${
+              className={`p-3 rounded-xl border shrink-0 ${
                 isBumblebee
                   ? 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400'
                   : 'bg-rose-500/10 border-rose-500/20 text-rose-400'
               }`}
             >
-              <Sparkles className="w-6 h-6 animate-pulse" />
+              <Sparkles className="w-5 sm:w-6 h-5 sm:h-6 animate-pulse" />
             </div>
             <div>
-              <div className="text-xs uppercase tracking-wider text-zinc-400 font-medium">
+              <div className="text-[11px] sm:text-xs uppercase tracking-wider text-zinc-400 font-medium">
                 {timeFilter === 'ALL'
                   ? 'All-Time Total Spend'
                   : timeFilter === 'THIS_WEEK'
                   ? "This Week's Spend"
                   : "This Month's Spend"}
               </div>
-              <div className="text-2xl sm:text-3xl font-extrabold text-white font-mono tracking-tight flex items-baseline gap-1">
+              <div className="text-xl sm:text-3xl font-extrabold text-white font-mono tracking-tight flex items-baseline gap-1">
                 <span className={isBumblebee ? 'text-yellow-400' : 'text-rose-500'}>₹</span>
                 {totalGroupSpend.toLocaleString('en-IN', {
                   minimumFractionDigits: 2,
@@ -206,11 +206,11 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           </div>
 
-          {/* Time Filter Tabs */}
-          <div className="flex items-center bg-zinc-900/90 p-1 rounded-xl border border-white/5 self-start md:self-auto">
+          {/* Time Filter Tabs - Segmented Control on Mobile */}
+          <div className="flex items-center bg-zinc-900/90 p-1 rounded-xl border border-white/5 w-full md:w-auto">
             <button
               onClick={() => setTimeFilter('ALL')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              className={`flex-1 md:flex-initial px-3 py-1.5 rounded-lg text-xs font-semibold text-center transition-all cursor-pointer ${
                 timeFilter === 'ALL'
                   ? isBumblebee
                     ? 'bg-yellow-400 text-zinc-950 font-bold shadow-md shadow-yellow-950'
@@ -222,7 +222,7 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
             <button
               onClick={() => setTimeFilter('THIS_MONTH')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              className={`flex-1 md:flex-initial px-3 py-1.5 rounded-lg text-xs font-semibold text-center transition-all cursor-pointer ${
                 timeFilter === 'THIS_MONTH'
                   ? isBumblebee
                     ? 'bg-yellow-400 text-zinc-950 font-bold shadow-md shadow-yellow-950'
@@ -234,7 +234,7 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
             <button
               onClick={() => setTimeFilter('THIS_WEEK')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              className={`flex-1 md:flex-initial px-3 py-1.5 rounded-lg text-xs font-semibold text-center transition-all cursor-pointer ${
                 timeFilter === 'THIS_WEEK'
                   ? isBumblebee
                     ? 'bg-yellow-400 text-zinc-950 font-bold shadow-md shadow-yellow-950'

@@ -250,8 +250,9 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-5">
-          {error && (
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+          <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-4 sm:space-y-5">
+            {error && (
             <div className="p-3 rounded-xl bg-rose-950/80 border border-rose-800 text-rose-300 text-xs flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
               <span>{error}</span>
@@ -547,16 +548,19 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
               className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-700 text-white text-xs placeholder-zinc-500 focus:outline-none focus:border-rose-500 transition-all"
             />
           </div>
+        </div>
 
-          {/* Submit Button */}
+        {/* Sticky Mobile-Friendly Submit Footer */}
+        <div className="p-4 border-t border-white/10 bg-zinc-950/90 backdrop-blur-md shrink-0">
           <button
             type="submit"
-            className="w-full py-3 rounded-xl bg-gradient-to-r from-rose-600 via-rose-700 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white text-xs font-extrabold uppercase tracking-wider transition-all cursor-pointer shadow-lg shadow-rose-950/60"
+            className="w-full py-3 rounded-xl bg-gradient-to-r from-rose-600 via-rose-700 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white text-xs font-extrabold uppercase tracking-wider transition-all cursor-pointer shadow-lg shadow-rose-950/60 active:scale-[0.99]"
           >
             Save Flat Expense
           </button>
-        </form>
-      </div>
+        </div>
+      </form>
     </div>
+  </div>
   );
 };

@@ -59,7 +59,7 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
                 className="flex items-center justify-between gap-3 cursor-pointer select-none"
               >
                 {/* Left: Tag icon + Title + Payer */}
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
                   <div
                     className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-xs shadow-md shrink-0"
                     style={{ backgroundColor: payer?.avatarColor || '#e11d48' }}
@@ -67,25 +67,25 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
                     {payer?.name?.charAt(0) || '₹'}
                   </div>
 
-                  <div>
-                    <div className="text-xs sm:text-sm font-bold text-white flex items-center gap-2">
-                      <span>{expense.title}</span>
-                      <span className="text-[10px] font-normal px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-300 border border-zinc-700/60">
+                  <div className="min-w-0 flex-1">
+                    <div className="text-xs sm:text-sm font-bold text-white flex items-center gap-1.5 flex-wrap">
+                      <span className="truncate max-w-[140px] sm:max-w-xs">{expense.title}</span>
+                      <span className="text-[10px] font-normal px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-300 border border-zinc-700/60 shrink-0">
                         {expense.tag}
                       </span>
                     </div>
 
-                    <div className="text-[11px] text-zinc-400 flex items-center gap-2 mt-0.5">
-                      <span>
+                    <div className="text-[11px] text-zinc-400 flex items-center gap-1.5 sm:gap-2 mt-0.5 flex-wrap">
+                      <span className="truncate max-w-[100px] sm:max-w-none">
                         Paid by <strong className="text-zinc-200">{payer?.name || 'Someone'}</strong>
                       </span>
                       <span>•</span>
-                      <span className="flex items-center gap-1 text-zinc-500">
+                      <span className="flex items-center gap-1 text-zinc-500 shrink-0">
                         <Calendar className="w-3 h-3" />
                         {dateFormatted}
                       </span>
                       {expense.splitType === 'CUSTOM' && (
-                        <span className="text-[9px] uppercase font-mono px-1.5 py-0.2 rounded bg-amber-950/70 text-amber-400 border border-amber-800/60">
+                        <span className="text-[9px] uppercase font-mono px-1.5 py-0.2 rounded bg-amber-950/70 text-amber-400 border border-amber-800/60 shrink-0">
                           Custom
                         </span>
                       )}
@@ -94,7 +94,7 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
                 </div>
 
                 {/* Right: Amount & Action buttons */}
-                <div className="flex items-center gap-2 sm:gap-3">
+                <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                   <div className="text-right">
                     <div className="text-sm sm:text-base font-extrabold text-white font-mono text-rose-500">
                       ₹{expense.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
