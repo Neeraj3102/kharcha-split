@@ -182,6 +182,20 @@ export function subscribeToRoomState(
 }
 
 /**
+ * Deep-clean payload for Firebase Realtime Database
+ * Strips all `undefined` keys because Firebase SDK strictly throws:
+ * "Error: set failed: value argument contains undefined in property..."
+ */
+export function cleanForFirebase<T>(obj: T): T {
+  try {
+    return JSON.parse(JSON.stringify(obj));
+  } catch (err) {
+    console.error('Failed to sanitize object for Firebase:', err);
+    return obj;
+  }
+}
+
+/**
  * Pushes the updated state to the shared Firebase Realtime Room
  */
 export async function pushRoomState(roomId: string, state: AppState, roomName?: string): Promise<boolean> {
@@ -189,6 +203,13 @@ export async function pushRoomState(roomId: string, state: AppState, roomName?: 
   if (!db) return false;
 
   try {
+    const sanitizedState = cleanForFirebase({
+      members: state.members || [],
+      expenses: state.expenses || [],
+      settledTransactions: state.settledTransactions || [],
+      customTags: state.customTags || [],
+    });
+
     const roomRef = ref(db, `kharcha_rooms/${roomId}`);
     await set(roomRef, {
       meta: {
@@ -196,7 +217,7 @@ export async function pushRoomState(roomId: string, state: AppState, roomName?: 
         name: roomName || `Flat ${roomId}`,
         updatedAt: new Date().toISOString(),
       },
-      state,
+      state: sanitizedState,
     });
     return true;
   } catch (err) {

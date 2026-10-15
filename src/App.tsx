@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Users, Radio, Copy, Check, ShieldCheck } from 'lucide-react';
 import type {
   Member,
@@ -105,16 +105,29 @@ export function App() {
     }
   }, [theme]);
 
-  // Open Master Admin Portal via URL hash e.g. #admin
+  // Active room ref to prevent stale closures during rapid updates
+  const activeRoomRef = useRef(activeRoom);
   useEffect(() => {
-    const checkAdminHash = () => {
-      if (window.location.hash.includes('#admin')) {
+    activeRoomRef.current = activeRoom;
+  }, [activeRoom]);
+
+  // Open Master Admin Portal or switch room via URL hash e.g. #admin or #room=710
+  useEffect(() => {
+    const handleHash = () => {
+      const hash = window.location.hash;
+      if (hash.includes('#admin')) {
         setIsAdminPortalOpen(true);
       }
+      if (hash.includes('#room=')) {
+        const rawId = hash.split('#room=')[1]?.split('&')[0]?.trim().toUpperCase();
+        if (rawId && (!activeRoomRef.current || activeRoomRef.current.roomId !== rawId)) {
+          setActiveRoom({ roomId: rawId, roomName: `Flat ${rawId}` });
+        }
+      }
     };
-    checkAdminHash();
-    window.addEventListener('hashchange', checkAdminHash);
-    return () => window.removeEventListener('hashchange', checkAdminHash);
+    handleHash();
+    window.addEventListener('hashchange', handleHash);
+    return () => window.removeEventListener('hashchange', handleHash);
   }, []);
 
   // LIVE ROOM SYNC: Listen for real-time updates from other flatmates via WebSockets
@@ -151,14 +164,12 @@ export function App() {
   }, [activeRoom?.roomId]);
 
   // Helper to sync local changes to the shared room
-  const syncToCloud = useCallback(
-    (newState: AppState) => {
-      if (activeRoom) {
-        pushRoomState(activeRoom.roomId, newState, activeRoom.roomName);
-      }
-    },
-    [activeRoom]
-  );
+  const syncToCloud = useCallback((newState: AppState) => {
+    const currentRoom = activeRoomRef.current;
+    if (currentRoom) {
+      pushRoomState(currentRoom.roomId, newState, currentRoom.roomName);
+    }
+  }, []);
 
   // Combined Tags: Default Indian Quick Tags + Custom User Tags
   const allTags: QuickTag[] = [...DEFAULT_INDIAN_TAGS, ...state.customTags];
@@ -213,31 +224,27 @@ export function App() {
       ...newMemberData,
       id: `m-${Date.now()}`,
     };
-    setState((prev) => {
-      const updated = {
-        ...prev,
-        members: [...prev.members, newMember],
-      };
-      syncToCloud(updated);
-      return updated;
-    });
+    const updated = {
+      ...state,
+      members: [...state.members, newMember],
+    };
+    setState(updated);
+    syncToCloud(updated);
   };
 
   const handleDeleteMember = (id: string) => {
-    setState((prev) => {
-      const updated = {
-        ...prev,
-        members: prev.members.filter((m) => m.id !== id),
-        expenses: prev.expenses.filter(
-          (e) => e.paidById !== id && !e.splits.some((s) => s.memberId === id)
-        ),
-        settledTransactions: prev.settledTransactions.filter(
-          (s) => s.fromMemberId !== id && s.toMemberId !== id
-        ),
-      };
-      syncToCloud(updated);
-      return updated;
-    });
+    const updated = {
+      ...state,
+      members: state.members.filter((m) => m.id !== id),
+      expenses: state.expenses.filter(
+        (e) => e.paidById !== id && !e.splits.some((s) => s.memberId === id)
+      ),
+      settledTransactions: state.settledTransactions.filter(
+        (s) => s.fromMemberId !== id && s.toMemberId !== id
+      ),
+    };
+    setState(updated);
+    syncToCloud(updated);
   };
 
   const handleResetAllData = () => {
@@ -265,36 +272,30 @@ export function App() {
       ...newExpenseData,
       id: `exp-${Date.now()}`,
     };
-    setState((prev) => {
-      const updated = {
-        ...prev,
-        expenses: [newExpense, ...prev.expenses],
-      };
-      syncToCloud(updated);
-      return updated;
-    });
+    const updated = {
+      ...state,
+      expenses: [newExpense, ...state.expenses],
+    };
+    setState(updated);
+    syncToCloud(updated);
   };
 
   const handleDeleteExpense = (id: string) => {
-    setState((prev) => {
-      const updated = {
-        ...prev,
-        expenses: prev.expenses.filter((e) => e.id !== id),
-      };
-      syncToCloud(updated);
-      return updated;
-    });
+    const updated = {
+      ...state,
+      expenses: state.expenses.filter((e) => e.id !== id),
+    };
+    setState(updated);
+    syncToCloud(updated);
   };
 
   const handleAddCustomTag = (tag: QuickTag) => {
-    setState((prev) => {
-      const updated = {
-        ...prev,
-        customTags: [...prev.customTags, tag],
-      };
-      syncToCloud(updated);
-      return updated;
-    });
+    const updated = {
+      ...state,
+      customTags: [...state.customTags, tag],
+    };
+    setState(updated);
+    syncToCloud(updated);
   };
 
   // Open QR Code Modal
@@ -325,17 +326,15 @@ export function App() {
 
   // Confirm Settlement
   const handleConfirmSettlement = (settlement: Settlement) => {
-    setState((prev) => {
-      const updated = {
-        ...prev,
-        settledTransactions: [
-          ...prev.settledTransactions,
-          { ...settlement, isSettled: true, settledAt: new Date().toISOString() },
-        ],
-      };
-      syncToCloud(updated);
-      return updated;
-    });
+    const updated = {
+      ...state,
+      settledTransactions: [
+        ...state.settledTransactions,
+        { ...settlement, isSettled: true, settledAt: new Date().toISOString() },
+      ],
+    };
+    setState(updated);
+    syncToCloud(updated);
   };
 
   const toggleTheme = () => {
