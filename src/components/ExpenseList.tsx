@@ -6,12 +6,14 @@ interface ExpenseListProps {
   expenses: Expense[];
   members: Member[];
   onDeleteExpense: (id: string) => void;
+  isRoomAdmin?: boolean;
 }
 
 export const ExpenseList: React.FC<ExpenseListProps> = ({
   expenses,
   members,
   onDeleteExpense,
+  isRoomAdmin = true,
 }) => {
   const memberMap = new Map(members.map((m) => [m.id, m]));
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -102,26 +104,28 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
                     </div>
                   </div>
 
-                  {/* QUICK DELETE BUTTON FOR THIS PARTICULAR EXPENSE */}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (
-                        window.confirm(
-                          `Delete this expense: "${expense.title}" (₹${expense.totalAmount.toLocaleString(
-                            'en-IN'
-                          )})?\n\nThis will remove only this expense from the ledger.`
-                        )
-                      ) {
-                        onDeleteExpense(expense.id);
-                      }
-                    }}
-                    className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-rose-950/60 border border-transparent hover:border-rose-900/50 transition-all cursor-pointer"
-                    title="Delete this individual expense"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  {/* QUICK DELETE BUTTON - ONLY VISIBLE & AUTHORIZED FOR ROOM ADMIN */}
+                  {isRoomAdmin && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (
+                          window.confirm(
+                            `Delete this expense: "${expense.title}" (₹${expense.totalAmount.toLocaleString(
+                              'en-IN'
+                            )})?\n\nThis will remove only this expense from the ledger.`
+                          )
+                        ) {
+                          onDeleteExpense(expense.id);
+                        }
+                      }}
+                      className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-rose-950/60 border border-transparent hover:border-rose-900/50 transition-all cursor-pointer"
+                      title="Delete this individual expense (Room Admin only)"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
 
                   <button
                     type="button"

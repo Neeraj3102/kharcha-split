@@ -126,6 +126,92 @@ export function clearActiveRoom(): void {
   }
 }
 
+const ROOM_ADMIN_PREFIX = 'kharchasplit_room_admin_';
+
+export interface RoomMeta {
+  id: string;
+  name: string;
+  adminKey?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export function saveRoomAdminKey(roomId: string, adminKey: string): void {
+  try {
+    localStorage.setItem(`${ROOM_ADMIN_PREFIX}${roomId}`, adminKey);
+  } catch {
+    // ignore
+  }
+}
+
+export function getRoomAdminKey(roomId: string): string | null {
+  try {
+    return localStorage.getItem(`${ROOM_ADMIN_PREFIX}${roomId}`);
+  } catch {
+    return null;
+  }
+}
+
+export function clearRoomAdminKey(roomId: string): void {
+  try {
+    localStorage.removeItem(`${ROOM_ADMIN_PREFIX}${roomId}`);
+  } catch {
+    // ignore
+  }
+}
+
+/**
+ * Checks if current user is the admin of the room
+ */
+export function isUserRoomAdmin(roomId: string, roomMeta?: RoomMeta | null): boolean {
+  if (!roomId) return true; // Offline local mode has full admin permissions
+  const savedKey = getRoomAdminKey(roomId);
+  if (!savedKey) return false;
+  if (roomMeta?.adminKey) {
+    return savedKey === roomMeta.adminKey;
+  }
+  return true;
+}
+
+/**
+ * Claim admin authority on this device using Admin PIN or known Admin Key
+ */
+export async function claimRoomAdminKey(roomId: string, enteredKeyOrPin: string): Promise<boolean> {
+  const currentPin = localStorage.getItem('kharchasplit_admin_pin') || '3102';
+  const cleanInput = enteredKeyOrPin.trim();
+  const db = getFirebaseDb();
+
+  if (db) {
+    try {
+      const metaRef = ref(db, `kharcha_rooms/${roomId}/meta`);
+      const snap = await get(metaRef);
+      const meta: RoomMeta = snap.val() || {};
+
+      if (meta.adminKey && (cleanInput === meta.adminKey || cleanInput === currentPin)) {
+        saveRoomAdminKey(roomId, meta.adminKey);
+        return true;
+      }
+
+      if (!meta.adminKey && (cleanInput === currentPin || cleanInput.length >= 4)) {
+        const newKey = `adm_${Math.random().toString(36).slice(2, 9)}_${Date.now().toString(36)}`;
+        saveRoomAdminKey(roomId, newKey);
+        await update(metaRef, { adminKey: newKey });
+        return true;
+      }
+    } catch (e) {
+      console.error('Failed to claim admin key via Firebase:', e);
+    }
+  }
+
+  if (cleanInput === currentPin) {
+    const newKey = `adm_${Math.random().toString(36).slice(2, 9)}_${Date.now().toString(36)}`;
+    saveRoomAdminKey(roomId, newKey);
+    return true;
+  }
+
+  return false;
+}
+
 /**
  * Safely converts any value from Firebase RTDB into an array
  * (Handles Firebase RTDB turning arrays into objects with indexed keys)
@@ -145,33 +231,46 @@ export function safeArray<T>(val: any): T[] {
  */
 export function subscribeToRoomState(
   roomId: string,
-  onUpdate: (state: AppState) => void,
+  onUpdate: (state: AppState, meta?: RoomMeta) => void,
   onError?: (err: Error) => void
 ): Unsubscribe | null {
   const db = getFirebaseDb();
   if (!db) return null;
 
-  const roomRef = ref(db, `kharcha_rooms/${roomId}/state`);
+  const roomRef = ref(db, `kharcha_rooms/${roomId}`);
 
   return onValue(
     roomRef,
     (snapshot) => {
-      const val = snapshot.val();
-      if (val) {
-        onUpdate({
-          members: safeArray(val.members),
-          expenses: safeArray(val.expenses),
-          settledTransactions: safeArray(val.settledTransactions),
-          customTags: safeArray(val.customTags),
-        });
+      const roomData = snapshot.val();
+      if (roomData) {
+        const val = roomData.state || {};
+        const meta: RoomMeta = roomData.meta || {
+          id: roomId,
+          name: `Flat ${roomId}`,
+          updatedAt: new Date().toISOString(),
+        };
+
+        onUpdate(
+          {
+            members: safeArray(val.members),
+            expenses: safeArray(val.expenses),
+            settledTransactions: safeArray(val.settledTransactions),
+            customTags: safeArray(val.customTags),
+          },
+          meta
+        );
       } else {
         // Fresh or empty room
-        onUpdate({
-          members: [],
-          expenses: [],
-          settledTransactions: [],
-          customTags: [],
-        });
+        onUpdate(
+          {
+            members: [],
+            expenses: [],
+            settledTransactions: [],
+            customTags: [],
+          },
+          { id: roomId, name: `Flat ${roomId}` }
+        );
       }
     },
     (error) => {
@@ -198,7 +297,12 @@ export function cleanForFirebase<T>(obj: T): T {
 /**
  * Pushes the updated state to the shared Firebase Realtime Room
  */
-export async function pushRoomState(roomId: string, state: AppState, roomName?: string): Promise<boolean> {
+export async function pushRoomState(
+  roomId: string,
+  state: AppState,
+  roomName?: string,
+  adminKey?: string
+): Promise<boolean> {
   const db = getFirebaseDb();
   if (!db) return false;
 
@@ -210,15 +314,21 @@ export async function pushRoomState(roomId: string, state: AppState, roomName?: 
       customTags: state.customTags || [],
     });
 
-    const roomRef = ref(db, `kharcha_rooms/${roomId}`);
-    await set(roomRef, {
-      meta: {
-        id: roomId,
-        name: roomName || `Flat ${roomId}`,
-        updatedAt: new Date().toISOString(),
-      },
-      state: sanitizedState,
+    const metaRef = ref(db, `kharcha_rooms/${roomId}/meta`);
+    const existingMetaSnap = await get(metaRef);
+    const existingMeta = existingMetaSnap.val() || {};
+
+    const finalAdminKey = existingMeta.adminKey || adminKey || getRoomAdminKey(roomId);
+
+    await update(metaRef, {
+      id: roomId,
+      name: roomName || existingMeta.name || `Flat ${roomId}`,
+      updatedAt: new Date().toISOString(),
+      ...(finalAdminKey ? { adminKey: finalAdminKey } : {}),
     });
+
+    const stateRef = ref(db, `kharcha_rooms/${roomId}/state`);
+    await set(stateRef, sanitizedState);
     return true;
   } catch (err) {
     console.error('Failed to sync room state to Firebase:', err);

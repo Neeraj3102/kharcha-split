@@ -11,6 +11,7 @@ interface MemberManagerProps {
   onDeleteMember: (id: string) => void;
   onResetAllData: () => void;
   onLoadDemoData: () => void;
+  isRoomAdmin?: boolean;
 }
 
 const AVATAR_COLORS = [
@@ -31,6 +32,7 @@ export const MemberManager: React.FC<MemberManagerProps> = ({
   onDeleteMember,
   onResetAllData,
   onLoadDemoData,
+  isRoomAdmin = true,
 }) => {
   const [name, setName] = useState('');
   const [upiId, setUpiId] = useState('');
@@ -221,22 +223,24 @@ export const MemberManager: React.FC<MemberManagerProps> = ({
                           </div>
                         </div>
 
-                        {/* Can delete individual flatmates */}
-                        <button
-                          onClick={() => {
-                            if (
-                              window.confirm(
-                                `Remove flatmate "${member.name}"?\n\n⚠️ Note: This removes ${member.name} from the flatmate list.\n\n💡 Tip: If you only want to delete a single expense/bill, cancel this and click the trash can icon on that expense in the Expense Feed instead.`
-                              )
-                            ) {
-                              onDeleteMember(member.id);
-                            }
-                          }}
-                          className="p-1.5 rounded-lg text-zinc-500 hover:text-rose-400 hover:bg-rose-950/40 transition-all cursor-pointer"
-                          title="Remove Flatmate"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                        {/* Can delete individual flatmates - Room Admin Only */}
+                        {isRoomAdmin && (
+                          <button
+                            onClick={() => {
+                              if (
+                                window.confirm(
+                                  `Remove flatmate "${member.name}"?\n\n⚠️ Note: This removes ${member.name} from the flatmate list.\n\n💡 Tip: If you only want to delete a single expense/bill, cancel this and click the trash can icon on that expense in the Expense Feed instead.`
+                                )
+                              ) {
+                                onDeleteMember(member.id);
+                              }
+                            }}
+                            className="p-1.5 rounded-lg text-zinc-500 hover:text-rose-400 hover:bg-rose-950/40 transition-all cursor-pointer"
+                            title="Remove Flatmate (Room Admin only)"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
                       </div>
                     </div>
                   );
@@ -245,51 +249,60 @@ export const MemberManager: React.FC<MemberManagerProps> = ({
             )}
           </div>
 
-          {/* DANGER ZONE: Wipe Entire Data & Remove All Flatmates */}
+          {/* DANGER ZONE: Wipe Entire Data & Remove All Flatmates (Room Admin Only) */}
           <div className="pt-4 border-t border-red-950/50 space-y-3">
             <div className="flex items-center gap-1.5 text-rose-500 text-xs font-bold font-mono uppercase tracking-wider">
               <AlertTriangle className="w-4 h-4" />
               <span>Danger Zone</span>
             </div>
 
-            {!showConfirmReset ? (
-              <div className="p-3.5 rounded-xl bg-red-950/20 border border-red-900/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                  <div className="text-xs font-bold text-white">Reset Entire Ledger</div>
-                  <div className="text-[11px] text-zinc-400">
-                    Deletes all flatmates, clears all expenses, and wipes local browser storage.
+            {isRoomAdmin ? (
+              !showConfirmReset ? (
+                <div className="p-3.5 rounded-xl bg-red-950/20 border border-red-900/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <div className="text-xs font-bold text-white">Reset Entire Ledger</div>
+                    <div className="text-[11px] text-zinc-400">
+                      Deletes all flatmates, clears all expenses, and wipes local browser storage.
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmReset(true)}
+                    className="px-3 py-1.5 rounded-lg bg-rose-950 hover:bg-rose-900 text-rose-300 border border-rose-800 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer shrink-0"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Delete All Data</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="p-4 rounded-xl bg-red-950/60 border border-red-600/80 space-y-3">
+                  <div className="text-xs text-rose-200 font-semibold leading-relaxed">
+                    ⚠️ <strong>Are you absolutely sure?</strong> This will permanently delete all flatmates, remove all recorded expenses, wipe settlement records, and clear your browser cache.
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleConfirmReset}
+                      className="flex-1 py-2 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition-all cursor-pointer shadow-md"
+                    >
+                      Yes, Delete Everything
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmReset(false)}
+                      className="px-4 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-medium transition-all cursor-pointer"
+                    >
+                      Cancel
+                    </button>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmReset(true)}
-                  className="px-3 py-1.5 rounded-lg bg-rose-950 hover:bg-rose-900 text-rose-300 border border-rose-800 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer shrink-0"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  <span>Delete All Data</span>
-                </button>
-              </div>
+              )
             ) : (
-              <div className="p-4 rounded-xl bg-red-950/60 border border-red-600/80 space-y-3">
-                <div className="text-xs text-rose-200 font-semibold leading-relaxed">
-                  ⚠️ <strong>Are you absolutely sure?</strong> This will permanently delete all flatmates, remove all recorded expenses, wipe settlement records, and clear your browser cache.
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={handleConfirmReset}
-                    className="flex-1 py-2 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition-all cursor-pointer shadow-md"
-                  >
-                    Yes, Delete Everything
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmReset(false)}
-                    className="px-4 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-medium transition-all cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                </div>
+              <div className="p-3 rounded-xl bg-zinc-900/60 border border-white/5 text-xs text-zinc-400 flex items-center gap-2">
+                <span>🔒</span>
+                <span>
+                  <strong>Admin Authority:</strong> Only the Room Admin who created this flat room can delete flatmates or reset the ledger.
+                </span>
               </div>
             )}
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Users, Radio, Copy, Check, ShieldCheck } from 'lucide-react';
 import type {
   Member,
@@ -25,7 +25,9 @@ import {
   getActiveRoomId,
   subscribeToRoomState,
   pushRoomState,
+  getRoomAdminKey,
 } from './utils/firebase';
+import type { RoomMeta } from './utils/firebase';
 
 // Components
 import { Header } from './components/Header';
@@ -105,6 +107,21 @@ export function App() {
     }
   }, [theme]);
 
+  // Active room metadata and room admin role calculation
+  const [roomMeta, setRoomMeta] = useState<RoomMeta | null>(null);
+  const [adminRefreshTick, setAdminRefreshTick] = useState(0);
+
+  // Authority check: Is current user the Room Admin? (Local mode has full admin rights)
+  const isRoomAdmin = useMemo(() => {
+    if (!activeRoom) return true;
+    const localKey = getRoomAdminKey(activeRoom.roomId);
+    if (!localKey) return false;
+    if (roomMeta?.adminKey) {
+      return localKey === roomMeta.adminKey;
+    }
+    return true;
+  }, [activeRoom, roomMeta, adminRefreshTick]);
+
   // Active room ref to prevent stale closures during rapid updates
   const activeRoomRef = useRef(activeRoom);
   useEffect(() => {
@@ -133,6 +150,7 @@ export function App() {
   // LIVE ROOM SYNC: Listen for real-time updates from other flatmates via WebSockets
   useEffect(() => {
     setSelectedTagFilter(null);
+    setRoomMeta(null);
 
     if (!activeRoom) {
       // Offline local mode
@@ -150,8 +168,11 @@ export function App() {
 
     const unsubscribe = subscribeToRoomState(
       activeRoom.roomId,
-      (remoteState) => {
+      (remoteState, meta) => {
         setState(remoteState);
+        if (meta) {
+          setRoomMeta(meta);
+        }
       },
       (err) => {
         console.warn('Realtime cloud sync fallback:', err);
@@ -233,6 +254,10 @@ export function App() {
   };
 
   const handleDeleteMember = (id: string) => {
+    if (activeRoom && !isRoomAdmin) {
+      alert('Authority restricted: Only the Room Admin can remove flatmates.');
+      return;
+    }
     const updated = {
       ...state,
       members: state.members.filter((m) => m.id !== id),
@@ -248,6 +273,10 @@ export function App() {
   };
 
   const handleResetAllData = () => {
+    if (activeRoom && !isRoomAdmin) {
+      alert('Authority restricted: Only the Room Admin can reset the flat ledger.');
+      return;
+    }
     localStorage.removeItem('kharchasplit_v1_data');
     if (window.location.hash) {
       window.history.replaceState(null, '', window.location.pathname);
@@ -281,6 +310,10 @@ export function App() {
   };
 
   const handleDeleteExpense = (id: string) => {
+    if (activeRoom && !isRoomAdmin) {
+      alert('Authority restricted: Only the Room Admin can delete expenses.');
+      return;
+    }
     const updated = {
       ...state,
       expenses: state.expenses.filter((e) => e.id !== id),
@@ -383,6 +416,15 @@ export function App() {
                 Connected to <strong className="text-white">{activeRoom.roomName}</strong> (Code:{' '}
                 <span className="font-mono text-emerald-400 font-bold">#{activeRoom.roomId}</span>)
               </span>
+              {isRoomAdmin ? (
+                <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-bold flex items-center gap-1">
+                  👑 Room Admin
+                </span>
+              ) : (
+                <span className="px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400 border border-zinc-700 text-[10px] font-semibold flex items-center gap-1">
+                  👤 Member (Add & Settle)
+                </span>
+              )}
               <span className="text-zinc-500 hidden sm:inline">• Live sync active</span>
             </div>
 
@@ -505,6 +547,7 @@ export function App() {
                 expenses={filteredExpenses}
                 members={state.members}
                 onDeleteExpense={handleDeleteExpense}
+                isRoomAdmin={isRoomAdmin}
               />
             </section>
           </>
@@ -561,6 +604,7 @@ export function App() {
         onDeleteMember={handleDeleteMember}
         onResetAllData={handleResetAllData}
         onLoadDemoData={handleLoadDemoData}
+        isRoomAdmin={isRoomAdmin}
       />
 
       <QRCodeModal
@@ -605,6 +649,9 @@ export function App() {
         setActiveRoom={setActiveRoom}
         state={state}
         theme={theme}
+        isRoomAdmin={isRoomAdmin}
+        roomMeta={roomMeta}
+        onAdminClaimed={() => setAdminRefreshTick((t) => t + 1)}
       />
 
       <AdminPortalModal

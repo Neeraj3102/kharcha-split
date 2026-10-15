@@ -26,8 +26,10 @@ import {
   pushRoomState,
   saveActiveRoomId,
   clearActiveRoom,
+  saveRoomAdminKey,
+  claimRoomAdminKey,
 } from '../utils/firebase';
-import type { FirebaseConfig } from '../utils/firebase';
+import type { FirebaseConfig, RoomMeta } from '../utils/firebase';
 
 interface RoomManagerModalProps {
   isOpen: boolean;
@@ -36,6 +38,9 @@ interface RoomManagerModalProps {
   setActiveRoom: (room: { roomId: string; roomName: string } | null) => void;
   state: AppState;
   theme: AppTheme;
+  roomMeta?: RoomMeta | null;
+  isRoomAdmin?: boolean;
+  onAdminClaimed?: () => void;
 }
 
 export const RoomManagerModal: React.FC<RoomManagerModalProps> = ({
@@ -45,6 +50,8 @@ export const RoomManagerModal: React.FC<RoomManagerModalProps> = ({
   setActiveRoom,
   state,
   theme,
+  isRoomAdmin = true,
+  onAdminClaimed,
 }) => {
   const [tab, setTab] = useState<'INVITE' | 'CREATE' | 'JOIN' | 'CONFIG'>(
     activeRoom ? 'INVITE' : 'CREATE'
@@ -165,6 +172,23 @@ export const RoomManagerModal: React.FC<RoomManagerModalProps> = ({
     setTimeout(() => setCopied(false), 2500);
   };
 
+  // Claim Admin State
+  const [claimPinInput, setClaimPinInput] = useState('');
+  const [claimStatus, setClaimStatus] = useState<{ text: string; isError?: boolean } | null>(null);
+
+  const handleClaimAdmin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeRoom) return;
+    const ok = await claimRoomAdminKey(activeRoom.roomId, claimPinInput);
+    if (ok) {
+      setClaimStatus({ text: 'Admin authority claimed successfully! You now have full delete authority.' });
+      setClaimPinInput('');
+      if (onAdminClaimed) onAdminClaimed();
+    } else {
+      setClaimStatus({ text: 'Incorrect PIN or Admin Key. Standard admin PIN is 3102.', isError: true });
+    }
+  };
+
   const handleCreateRoom = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanName = newRoomName.trim() || `Flat ${newRoomCode}`;
@@ -185,16 +209,22 @@ export const RoomManagerModal: React.FC<RoomManagerModalProps> = ({
           customTags: [],
         };
 
+    // Generate unique admin key for the creator
+    const adminKey = `adm_${Math.random().toString(36).slice(2, 9)}_${Date.now().toString(36)}`;
+    saveRoomAdminKey(cleanCode, adminKey);
+
     // Save active room
     saveActiveRoomId(cleanCode, cleanName);
     setActiveRoom({ roomId: cleanCode, roomName: cleanName });
 
-    // Push initial clean state to Firebase
+    // Push initial clean state to Firebase with adminKey
     if (hasDb) {
-      await pushRoomState(cleanCode, initialRoomState, cleanName);
+      await pushRoomState(cleanCode, initialRoomState, cleanName, adminKey);
     }
 
-    setStatusMsg({ text: `Created room ${cleanCode}! Send the link to your flatmates.` });
+    if (onAdminClaimed) onAdminClaimed();
+
+    setStatusMsg({ text: `Created room ${cleanCode}! You are the Room Admin with exclusive delete authority.` });
     setTab('INVITE');
   };
 
@@ -355,6 +385,64 @@ export const RoomManagerModal: React.FC<RoomManagerModalProps> = ({
                 </div>
               </div>
 
+              {/* AUTHORITY & ROLE BADGE */}
+              <div className="p-3.5 rounded-xl bg-zinc-900/90 border border-white/5 space-y-2 text-xs">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className={`p-1.5 rounded-lg text-sm ${isRoomAdmin ? 'bg-amber-500/20 text-amber-400' : 'bg-zinc-800 text-zinc-400'}`}>
+                      {isRoomAdmin ? '👑' : '👤'}
+                    </span>
+                    <div>
+                      <div className="font-bold text-white flex items-center gap-2">
+                        <span>{isRoomAdmin ? 'You are the Room Admin' : 'You are a Room Member'}</span>
+                        <span
+                          className={`text-[9px] px-1.5 py-0.5 rounded font-mono font-bold uppercase tracking-wider ${
+                            isRoomAdmin
+                              ? 'bg-amber-950 text-amber-300 border border-amber-800'
+                              : 'bg-zinc-800 text-zinc-400 border border-zinc-700'
+                          }`}
+                        >
+                          {isRoomAdmin ? 'Full Delete Rights' : 'Add & Settle Only'}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-zinc-400">
+                        {isRoomAdmin
+                          ? 'You created this room. Only you can delete expenses, remove flatmates, or reset the ledger.'
+                          : 'You can add expenses, split bills, and settle with UPI QR. Only the room creator can delete records.'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {!isRoomAdmin && (
+                  <form onSubmit={handleClaimAdmin} className="pt-2 border-t border-white/5 space-y-2">
+                    <label className="block text-[11px] font-semibold text-zinc-300">
+                      Are you the creator on a new device? Claim Admin Authority:
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="password"
+                        placeholder="Enter Admin PIN (Default: 3102)"
+                        value={claimPinInput}
+                        onChange={(e) => setClaimPinInput(e.target.value)}
+                        className="flex-1 px-3 py-1.5 rounded-lg bg-zinc-950 border border-zinc-700 text-white text-xs placeholder-zinc-500 focus:outline-none focus:border-amber-400"
+                      />
+                      <button
+                        type="submit"
+                        className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-zinc-950 text-xs font-bold transition-all cursor-pointer"
+                      >
+                        Claim Admin
+                      </button>
+                    </div>
+                    {claimStatus && (
+                      <p className={`text-[11px] ${claimStatus.isError ? 'text-rose-400' : 'text-emerald-400'}`}>
+                        {claimStatus.text}
+                      </p>
+                    )}
+                  </form>
+                )}
+              </div>
+
               <div className="space-y-2">
                 <label className="block text-xs font-semibold text-zinc-300">
                   Direct Flatmate Invite Link:
@@ -383,7 +471,7 @@ export const RoomManagerModal: React.FC<RoomManagerModalProps> = ({
                   </button>
                 </div>
                 <p className="text-[11px] text-zinc-400">
-                  Share this link on WhatsApp. When flatmates tap it, they join the room and see all expenses live!
+                  Share this link on WhatsApp. Flatmates who join cannot delete your expenses or flatmates!
                 </p>
               </div>
 
