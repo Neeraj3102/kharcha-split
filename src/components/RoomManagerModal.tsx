@@ -55,6 +55,7 @@ export const RoomManagerModal: React.FC<RoomManagerModalProps> = ({
   const [newRoomCode, setNewRoomCode] = useState(
     () => `FLAT-${Math.floor(100 + Math.random() * 900)}`
   );
+  const [importCurrentData, setImportCurrentData] = useState(false);
 
   // Join Room State
   const [joinCode, setJoinCode] = useState('');
@@ -174,13 +175,23 @@ export const RoomManagerModal: React.FC<RoomManagerModalProps> = ({
       return;
     }
 
+    // Isolate initial state for the new room (clean empty room by default)
+    const initialRoomState: AppState = importCurrentData
+      ? state
+      : {
+          members: [],
+          expenses: [],
+          settledTransactions: [],
+          customTags: [],
+        };
+
     // Save active room
     saveActiveRoomId(cleanCode, cleanName);
     setActiveRoom({ roomId: cleanCode, roomName: cleanName });
 
-    // Push initial state to Firebase if configured
+    // Push initial clean state to Firebase
     if (hasDb) {
-      await pushRoomState(cleanCode, state, cleanName);
+      await pushRoomState(cleanCode, initialRoomState, cleanName);
     }
 
     setStatusMsg({ text: `Created room ${cleanCode}! Send the link to your flatmates.` });
@@ -417,6 +428,20 @@ export const RoomManagerModal: React.FC<RoomManagerModalProps> = ({
                   className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-700 text-white text-xs font-mono font-bold focus:outline-none focus:border-rose-500 uppercase"
                 />
               </div>
+
+              {state.members.length > 0 && (
+                <label className="flex items-start gap-2 p-3 rounded-xl bg-zinc-900/70 border border-white/5 cursor-pointer text-xs text-zinc-300">
+                  <input
+                    type="checkbox"
+                    checked={importCurrentData}
+                    onChange={(e) => setImportCurrentData(e.target.checked)}
+                    className="mt-0.5 rounded text-rose-500 focus:ring-0"
+                  />
+                  <span>
+                    Copy current {state.members.length} flatmate(s) and expenses into this new room (Leave unchecked to start with a fresh blank flat).
+                  </span>
+                </label>
+              )}
 
               <button
                 type="submit"

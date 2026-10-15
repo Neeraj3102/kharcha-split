@@ -39,6 +39,7 @@ import { ReportModal } from './components/ReportModal';
 import { ShareLedgerModal } from './components/ShareLedgerModal';
 import { RoomManagerModal } from './components/RoomManagerModal';
 import { AdminPortalModal } from './components/AdminPortalModal';
+import { TagSpendingChart } from './components/TagSpendingChart';
 
 export function App() {
   const [state, setState] = useState<AppState>(loadInitialState);
@@ -68,6 +69,7 @@ export function App() {
   const [isShareLedgerOpen, setIsShareLedgerOpen] = useState(false);
   const [isRoomManagerOpen, setIsRoomManagerOpen] = useState(false);
   const [isAdminPortalOpen, setIsAdminPortalOpen] = useState(false);
+  const [selectedTagFilter, setSelectedTagFilter] = useState<string | null>(null);
 
   // QR Modal state
   const [qrState, setQrState] = useState<{
@@ -117,7 +119,21 @@ export function App() {
 
   // LIVE ROOM SYNC: Listen for real-time updates from other flatmates via WebSockets
   useEffect(() => {
-    if (!activeRoom) return;
+    setSelectedTagFilter(null);
+
+    if (!activeRoom) {
+      // Offline local mode
+      setState(loadInitialState());
+      return;
+    }
+
+    // Clean state while switching/loading room so previous flat's data doesn't cross-contaminate
+    setState({
+      members: [],
+      expenses: [],
+      settledTransactions: [],
+      customTags: [],
+    });
 
     const unsubscribe = subscribeToRoomState(
       activeRoom.roomId,
@@ -147,9 +163,15 @@ export function App() {
   // Combined Tags: Default Indian Quick Tags + Custom User Tags
   const allTags: QuickTag[] = [...DEFAULT_INDIAN_TAGS, ...state.customTags];
 
-  // Filtered Expenses by Time Filter (All, Week, Month)
+  // Filtered Expenses by Time Filter (All, Week, Month) & Selected Tag Filter
   const now = new Date();
   const filteredExpenses = state.expenses.filter((e) => {
+    // 1. Tag filter from pie chart
+    if (selectedTagFilter && e.tag !== selectedTagFilter) {
+      return false;
+    }
+
+    // 2. Time filter
     if (timeFilter === 'ALL') return true;
     const expDate = new Date(e.date);
 
@@ -465,7 +487,20 @@ export function App() {
               />
             </section>
 
-            {/* Section 2: Chronological Filterable Expense Feed */}
+            {/* Section 2: Spending by Category / Tag (Pie / Donut Chart & Breakdown) */}
+            {state.expenses.length > 0 && (
+              <section>
+                <TagSpendingChart
+                  expenses={state.expenses}
+                  tags={allTags}
+                  theme={theme}
+                  selectedTagFilter={selectedTagFilter}
+                  onSelectTagFilter={setSelectedTagFilter}
+                />
+              </section>
+            )}
+
+            {/* Section 3: Chronological Filterable Expense Feed */}
             <section>
               <ExpenseList
                 expenses={filteredExpenses}

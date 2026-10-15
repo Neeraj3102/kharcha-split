@@ -18,29 +18,34 @@ const CONFIG_STORAGE_KEY = 'kharchasplit_firebase_config';
 const ACTIVE_ROOM_KEY = 'kharchasplit_active_room';
 
 const DEFAULT_FIREBASE_CONFIG: FirebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'AIzaSyB-lpluRQZQ2g0dwGfCxo3Kn1mJ-8F0Wco',
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'kharchasplit-cee56.firebaseapp.com',
-  databaseURL:
-    import.meta.env.VITE_FIREBASE_DATABASE_URL ||
-    'https://kharchasplit-cee56-default-rtdb.asia-southeast1.firebasedatabase.app',
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'kharchasplit-cee56',
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || '1:976932700270:web:1b5aa06e059a603091267f',
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || '',
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || '',
+  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL || '',
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || '',
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || '',
 };
 
 // Default config from environment variables or project defaults
-export function getStoredFirebaseConfig(): FirebaseConfig {
+export function getStoredFirebaseConfig(): FirebaseConfig | null {
   // 1. Check localStorage for admin overrides
   try {
     const saved = localStorage.getItem(CONFIG_STORAGE_KEY);
     if (saved) {
-      return JSON.parse(saved) as FirebaseConfig;
+      const parsed = JSON.parse(saved) as FirebaseConfig;
+      if (parsed.apiKey && parsed.databaseURL) {
+        return parsed;
+      }
     }
   } catch (err) {
     console.error('Failed to parse Firebase config:', err);
   }
 
-  // 2. Fallback to project defaults
-  return DEFAULT_FIREBASE_CONFIG;
+  // 2. Fallback to project defaults from environment variables
+  if (DEFAULT_FIREBASE_CONFIG.apiKey && DEFAULT_FIREBASE_CONFIG.databaseURL) {
+    return DEFAULT_FIREBASE_CONFIG;
+  }
+
+  return null;
 }
 
 export function saveFirebaseConfig(config: FirebaseConfig): void {
@@ -122,6 +127,19 @@ export function clearActiveRoom(): void {
 }
 
 /**
+ * Safely converts any value from Firebase RTDB into an array
+ * (Handles Firebase RTDB turning arrays into objects with indexed keys)
+ */
+export function safeArray<T>(val: any): T[] {
+  if (!val) return [];
+  if (Array.isArray(val)) return val.filter((item) => item !== null && item !== undefined);
+  if (typeof val === 'object') {
+    return Object.values(val).filter((item) => item !== null && item !== undefined) as T[];
+  }
+  return [];
+}
+
+/**
  * Subscribes to live room updates via WebSockets.
  * Calls onUpdate whenever any flatmate adds an expense, settles, or edits flatmates!
  */
@@ -139,12 +157,20 @@ export function subscribeToRoomState(
     roomRef,
     (snapshot) => {
       const val = snapshot.val();
-      if (val && Array.isArray(val.members)) {
+      if (val) {
         onUpdate({
-          members: val.members || [],
-          expenses: val.expenses || [],
-          settledTransactions: val.settledTransactions || [],
-          customTags: val.customTags || [],
+          members: safeArray(val.members),
+          expenses: safeArray(val.expenses),
+          settledTransactions: safeArray(val.settledTransactions),
+          customTags: safeArray(val.customTags),
+        });
+      } else {
+        // Fresh or empty room
+        onUpdate({
+          members: [],
+          expenses: [],
+          settledTransactions: [],
+          customTags: [],
         });
       }
     },
@@ -220,7 +246,28 @@ export function subscribeToAllRooms(
     allRoomsRef,
     (snapshot) => {
       const data = snapshot.val() || {};
-      onUpdate(data);
+      const normalized: Record<string, FirebaseRoomData> = {};
+
+      Object.entries(data).forEach(([roomId, roomRaw]: [string, any]) => {
+        if (roomRaw) {
+          const st = roomRaw.state || {};
+          normalized[roomId] = {
+            meta: roomRaw.meta || {
+              id: roomId,
+              name: `Flat ${roomId}`,
+              updatedAt: new Date().toISOString(),
+            },
+            state: {
+              members: safeArray(st.members),
+              expenses: safeArray(st.expenses),
+              settledTransactions: safeArray(st.settledTransactions),
+              customTags: safeArray(st.customTags),
+            },
+          };
+        }
+      });
+
+      onUpdate(normalized);
     },
     (err) => {
       console.error('Failed to subscribe to all rooms:', err);
@@ -259,15 +306,14 @@ export async function deleteExpenseFromRoom(
   try {
     const snapshot = await get(ref(db, `kharcha_rooms/${roomId}/state/expenses`));
     if (snapshot.exists()) {
-      const expenses = snapshot.val();
-      if (Array.isArray(expenses)) {
-        const filtered = expenses.filter((e: any) => e.id !== expenseId);
-        await set(ref(db, `kharcha_rooms/${roomId}/state/expenses`), filtered);
-        await update(ref(db, `kharcha_rooms/${roomId}/meta`), {
-          updatedAt: new Date().toISOString(),
-        });
-        return true;
-      }
+      const raw = snapshot.val();
+      const expenses = safeArray<any>(raw);
+      const filtered = expenses.filter((e: any) => e && e.id !== expenseId);
+      await set(ref(db, `kharcha_rooms/${roomId}/state/expenses`), filtered);
+      await update(ref(db, `kharcha_rooms/${roomId}/meta`), {
+        updatedAt: new Date().toISOString(),
+      });
+      return true;
     }
     return false;
   } catch (err) {
@@ -289,15 +335,14 @@ export async function deleteMemberFromRoom(
   try {
     const snapshot = await get(ref(db, `kharcha_rooms/${roomId}/state/members`));
     if (snapshot.exists()) {
-      const members = snapshot.val();
-      if (Array.isArray(members)) {
-        const filtered = members.filter((m: any) => m.id !== memberId);
-        await set(ref(db, `kharcha_rooms/${roomId}/state/members`), filtered);
-        await update(ref(db, `kharcha_rooms/${roomId}/meta`), {
-          updatedAt: new Date().toISOString(),
-        });
-        return true;
-      }
+      const raw = snapshot.val();
+      const members = safeArray<any>(raw);
+      const filtered = members.filter((m: any) => m && m.id !== memberId);
+      await set(ref(db, `kharcha_rooms/${roomId}/state/members`), filtered);
+      await update(ref(db, `kharcha_rooms/${roomId}/meta`), {
+        updatedAt: new Date().toISOString(),
+      });
+      return true;
     }
     return false;
   } catch (err) {
