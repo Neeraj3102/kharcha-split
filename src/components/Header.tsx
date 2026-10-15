@@ -38,9 +38,9 @@ export const Header: React.FC<HeaderProps> = ({
       {/* Top Bar with Brand & Actions */}
       <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         {/* Brand with Theme Badge */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
           <div
-            className={`relative flex items-center justify-center w-12 h-12 rounded-xl p-[1px] ${
+            className={`relative flex items-center justify-center w-11 h-11 sm:w-12 sm:h-12 rounded-xl p-[1px] shrink-0 ${
               isBumblebee
                 ? 'bg-gradient-to-br from-yellow-300 via-amber-400 to-yellow-500 shadow-lg shadow-yellow-950/60'
                 : 'bg-gradient-to-br from-rose-600 via-rose-700 to-amber-600 neon-glow-red'
@@ -48,7 +48,7 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <div className="w-full h-full bg-[#0d0d12] rounded-xl flex items-center justify-center">
               <span
-                className={`font-heading text-2xl font-black tracking-tighter ${
+                className={`font-heading text-xl sm:text-2xl font-black tracking-tighter ${
                   isBumblebee ? 'text-yellow-400' : 'text-rose-500'
                 }`}
               >
@@ -56,29 +56,29 @@ export const Header: React.FC<HeaderProps> = ({
               </span>
             </div>
             {/* Pulsing micro dot */}
-            <span className="absolute -top-1 -right-1 flex h-3 w-3">
+            <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5 sm:h-3 sm:w-3">
               <span
                 className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
                   isBumblebee ? 'bg-yellow-400' : 'bg-rose-500'
                 }`}
               ></span>
               <span
-                className={`relative inline-flex rounded-full h-3 w-3 ${
+                className={`relative inline-flex rounded-full h-2.5 w-2.5 sm:h-3 sm:w-3 ${
                   isBumblebee ? 'bg-yellow-500' : 'bg-rose-600'
                 }`}
               ></span>
             </span>
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white flex items-center gap-2">
-                KHARCHA
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-xl sm:text-3xl font-extrabold tracking-tight text-white flex items-center gap-1.5 shrink-0">
+                <span>KHARCHA</span>
                 <span className={isBumblebee ? 'text-yellow-400' : 'text-rose-500'}>
                   SPLIT
                 </span>
               </h1>
               <span
-                className={`text-[10px] uppercase font-mono tracking-widest px-2 py-0.5 rounded-full border ${
+                className={`text-[9px] sm:text-[10px] uppercase font-mono tracking-widest px-2 py-0.5 rounded-full border shrink-0 ${
                   isBumblebee
                     ? 'bg-yellow-950/80 text-yellow-400 border-yellow-700/60'
                     : 'bg-rose-950/80 text-rose-400 border-rose-800/60'
@@ -87,7 +87,7 @@ export const Header: React.FC<HeaderProps> = ({
                 {isBumblebee ? 'Bumblebee' : 'Crimson Dark'}
               </span>
             </div>
-            <p className="text-xs text-zinc-400 font-medium">
+            <p className="text-[11px] sm:text-xs text-zinc-400 font-medium truncate mt-0.5">
               Bachelor & Flatmate Ledger • Instant UPI Settle
             </p>
           </div>

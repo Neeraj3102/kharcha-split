@@ -90,6 +90,10 @@ export const RoomManagerModal: React.FC<RoomManagerModalProps> = ({
   const [copied, setCopied] = useState(false);
   const [statusMsg, setStatusMsg] = useState<{ text: string; isError?: boolean } | null>(null);
 
+  // Claim Admin State
+  const [claimPinInput, setClaimPinInput] = useState('');
+  const [claimStatus, setClaimStatus] = useState<{ text: string; isError?: boolean } | null>(null);
+
   // Firebase Config State
   const [config, setConfig] = useState<FirebaseConfig>(() => {
     return (
@@ -192,10 +196,6 @@ export const RoomManagerModal: React.FC<RoomManagerModalProps> = ({
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
   };
-
-  // Claim Admin State
-  const [claimPinInput, setClaimPinInput] = useState('');
-  const [claimStatus, setClaimStatus] = useState<{ text: string; isError?: boolean } | null>(null);
 
   const handleClaimAdmin = async (e: React.FormEvent) => {
     e.preventDefault();
