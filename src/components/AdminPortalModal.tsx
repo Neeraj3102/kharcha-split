@@ -68,7 +68,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
   const [actionMsg, setActionMsg] = useState<{ text: string; isError?: boolean } | null>(null);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
 
-  const isBumblebee = theme === 'bumblebee';
+  const isPurple = theme === 'purple';
   const hasDb = !!getFirebaseDb();
 
   // Listen to all rooms when authenticated and modal is open
@@ -234,7 +234,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
           <div className="flex items-center gap-3">
             <span
               className={`p-2 rounded-xl flex items-center justify-center ${
-                isBumblebee ? 'bg-yellow-400/10 text-yellow-400' : 'bg-rose-500/10 text-rose-500'
+                isPurple ? 'bg-purple-500/10 text-purple-400' : 'bg-rose-500/10 text-rose-500'
               }`}
             >
               <ShieldCheck className="w-5 h-5" />
@@ -283,7 +283,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
         {!isAuthenticated ? (
           <div className="p-8 sm:p-12 overflow-y-auto flex flex-col items-center justify-center text-center">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-zinc-800 to-zinc-950 border border-white/10 flex items-center justify-center shadow-2xl mb-4">
-              <Lock className={`w-8 h-8 ${isBumblebee ? 'text-yellow-400' : 'text-rose-500'}`} />
+              <Lock className={`w-8 h-8 ${isPurple ? 'text-purple-400' : 'text-rose-500'}`} />
             </div>
 
             <div className="max-w-md space-y-1 mb-6">
@@ -352,8 +352,8 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
               <button
                 type="submit"
                 className={`w-full py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg ${
-                  isBumblebee
-                    ? 'bg-gradient-to-r from-yellow-400 to-amber-500 text-zinc-950 hover:from-yellow-300'
+                  isPurple
+                    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-500 shadow-purple-950/60'
                     : 'bg-gradient-to-r from-rose-600 to-rose-700 text-white hover:from-rose-500'
                 }`}
               >
@@ -447,7 +447,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                 <button
                   type="submit"
                   className={`px-4 py-1.5 rounded-lg font-bold text-xs cursor-pointer ${
-                    isBumblebee ? 'bg-yellow-400 text-zinc-950' : 'bg-rose-600 text-white'
+                    isPurple ? 'bg-purple-600 text-white' : 'bg-rose-600 text-white'
                   }`}
                 >
                   Save New Master Pass

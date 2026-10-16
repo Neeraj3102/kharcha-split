@@ -34,7 +34,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
   theme,
 }) => {
   const [currentStep, setCurrentStep] = useState(0);
-  const isBumblebee = theme === 'bumblebee';
+  const isPurple = theme === 'purple';
 
   if (!isOpen) return null;
 
@@ -44,8 +44,8 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
       title: 'Welcome to KharchaSplit',
       subtitle: 'The modern bachelor & flatmate expense ledger tailored for shared living in India.',
       icon: <Building2 className="w-8 h-8 text-rose-500" />,
-      iconBg: isBumblebee
-        ? 'bg-yellow-500/10 border-yellow-500/30'
+      iconBg: isPurple
+        ? 'bg-purple-500/10 border-purple-500/30'
         : 'bg-rose-500/10 border-rose-500/30',
       points: [
         {
@@ -160,7 +160,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
         {/* Glow Accent */}
         <div
           className={`absolute -top-20 -right-20 w-44 h-44 rounded-full blur-3xl pointer-events-none opacity-20 ${
-            isBumblebee ? 'bg-yellow-400' : 'bg-rose-500'
+            isPurple ? 'bg-purple-500' : 'bg-rose-500'
           }`}
         />
 
@@ -228,8 +228,8 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
                 onClick={() => setCurrentStep(idx)}
                 className={`h-1.5 rounded-full transition-all cursor-pointer ${
                   currentStep === idx
-                    ? isBumblebee
-                      ? 'w-6 bg-yellow-400'
+                    ? isPurple
+                      ? 'w-6 bg-purple-400'
                       : 'w-6 bg-rose-500'
                     : 'w-2 bg-zinc-700 hover:bg-zinc-500'
                 }`}
@@ -255,8 +255,8 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
               type="button"
               onClick={handleNext}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-lg flex items-center gap-1.5 ${
-                isBumblebee
-                  ? 'bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-300 hover:to-amber-400 text-zinc-950 shadow-yellow-950/60'
+                isPurple
+                  ? 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-purple-950/60'
                   : 'bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white shadow-rose-950/60'
               }`}
             >

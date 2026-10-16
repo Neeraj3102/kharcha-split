@@ -35,7 +35,7 @@ export const TagSpendingChart: React.FC<TagSpendingChartProps> = ({
   const [viewMode, setViewMode] = useState<'DONUT' | 'BAR'>('DONUT');
   const [hoveredTag, setHoveredTag] = useState<string | null>(null);
 
-  const isBumblebee = theme === 'bumblebee';
+  const isPurple = theme === 'purple';
 
   // Total spent across all expenses
   const totalSpend = expenses.reduce((acc, curr) => acc + (Number(curr.totalAmount) || 0), 0);
@@ -89,7 +89,7 @@ export const TagSpendingChart: React.FC<TagSpendingChartProps> = ({
         <div className="flex items-center gap-2">
           <span
             className={`p-1.5 rounded-lg ${
-              isBumblebee ? 'bg-yellow-400/10 text-yellow-400' : 'bg-rose-500/10 text-rose-500'
+              isPurple ? 'bg-purple-500/10 text-purple-400' : 'bg-rose-500/10 text-rose-500'
             }`}
           >
             <PieChart className="w-4 h-4" />
@@ -122,8 +122,8 @@ export const TagSpendingChart: React.FC<TagSpendingChartProps> = ({
               onClick={() => setViewMode('DONUT')}
               className={`px-2.5 py-1 rounded-md flex items-center gap-1 font-semibold transition cursor-pointer ${
                 viewMode === 'DONUT'
-                  ? isBumblebee
-                    ? 'bg-yellow-400 text-zinc-950 shadow-sm'
+                  ? isPurple
+                    ? 'bg-purple-600 text-white shadow-sm'
                     : 'bg-rose-600 text-white shadow-sm'
                   : 'text-zinc-400 hover:text-white'
               }`}
@@ -136,8 +136,8 @@ export const TagSpendingChart: React.FC<TagSpendingChartProps> = ({
               onClick={() => setViewMode('BAR')}
               className={`px-2.5 py-1 rounded-md flex items-center gap-1 font-semibold transition cursor-pointer ${
                 viewMode === 'BAR'
-                  ? isBumblebee
-                    ? 'bg-yellow-400 text-zinc-950 shadow-sm'
+                  ? isPurple
+                    ? 'bg-purple-600 text-white shadow-sm'
                     : 'bg-rose-600 text-white shadow-sm'
                   : 'text-zinc-400 hover:text-white'
               }`}

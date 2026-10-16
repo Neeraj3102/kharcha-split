@@ -84,7 +84,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
     }
   };
 
-  const isBumblebee = theme === 'bumblebee';
+  const isPurple = theme === 'purple';
 
   return (
     <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
@@ -94,7 +94,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
           <div className="flex items-center gap-2">
             <span
               className={`p-2 rounded-lg ${
-                isBumblebee ? 'bg-yellow-400/10 text-yellow-400' : 'bg-emerald-500/10 text-emerald-400'
+                isPurple ? 'bg-purple-500/10 text-purple-400' : 'bg-emerald-500/10 text-emerald-400'
               }`}
             >
               <FileText className="w-5 h-5" />
@@ -122,8 +122,8 @@ export const ReportModal: React.FC<ReportModalProps> = ({
             onClick={() => setSelectedFilter('THIS_WEEK')}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
               selectedFilter === 'THIS_WEEK'
-                ? isBumblebee
-                  ? 'bg-yellow-400 text-zinc-950 font-bold shadow-md shadow-yellow-950'
+                ? isPurple
+                  ? 'bg-purple-600 text-white font-bold shadow-md shadow-purple-950'
                   : 'bg-rose-600 text-white shadow-md shadow-rose-950'
                 : 'bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800'
             }`}
@@ -134,8 +134,8 @@ export const ReportModal: React.FC<ReportModalProps> = ({
             onClick={() => setSelectedFilter('THIS_MONTH')}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
               selectedFilter === 'THIS_MONTH'
-                ? isBumblebee
-                  ? 'bg-yellow-400 text-zinc-950 font-bold shadow-md shadow-yellow-950'
+                ? isPurple
+                  ? 'bg-purple-600 text-white font-bold shadow-md shadow-purple-950'
                   : 'bg-rose-600 text-white shadow-md shadow-rose-950'
                 : 'bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800'
             }`}
@@ -146,8 +146,8 @@ export const ReportModal: React.FC<ReportModalProps> = ({
             onClick={() => setSelectedFilter('ALL')}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
               selectedFilter === 'ALL'
-                ? isBumblebee
-                  ? 'bg-yellow-400 text-zinc-950 font-bold shadow-md shadow-yellow-950'
+                ? isPurple
+                  ? 'bg-purple-600 text-white font-bold shadow-md shadow-purple-950'
                   : 'bg-rose-600 text-white shadow-md shadow-rose-950'
                 : 'bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800'
             }`}
@@ -160,7 +160,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
         <div className="px-6 pt-4">
           <div className="p-3 rounded-xl bg-zinc-900/90 border border-white/5 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <FileDown className={`w-4 h-4 ${isBumblebee ? 'text-yellow-400' : 'text-rose-400'}`} />
+              <FileDown className={`w-4 h-4 ${isPurple ? 'text-purple-400' : 'text-rose-400'}`} />
               <div className="text-xs">
                 <span className="font-bold text-white">Share as PDF Document</span>
                 <span className="text-zinc-500 block text-[10px]">Formatted table with spenders & tags</span>
@@ -170,8 +170,8 @@ export const ReportModal: React.FC<ReportModalProps> = ({
               onClick={handleDownloadPdf}
               disabled={pdfGenerating}
               className={`px-3 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-md ${
-                isBumblebee
-                  ? 'bg-yellow-400 hover:bg-yellow-300 text-zinc-950'
+                isPurple
+                  ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-purple-950/60'
                   : 'bg-rose-600 hover:bg-rose-500 text-white'
               }`}
             >

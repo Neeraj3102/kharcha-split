@@ -8,7 +8,7 @@
 [![React](https://img.shields.io/badge/Framework-React%2019%20%2B%20Vite-cyan.svg)](https://react.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Styling-Tailwind%20CSS%20v4-38bdf8.svg)](https://tailwindcss.com/)
 [![UPI Protocol](https://img.shields.io/badge/Payments-NPCI%20UPI%20Intent-green.svg)](https://www.npci.org.in/)
-[![Theme](https://img.shields.io/badge/Theme-Dark%20%26%20Bumblebee-yellow.svg)](#-dual-changeable-themes)
+[![Theme](https://img.shields.io/badge/Theme-Dark%20%26%20Purple-purple.svg)](#-dual-changeable-themes)
 
 ---
 
@@ -49,7 +49,7 @@ Apps like **Splitwise** have locked basic features behind aggressive paywalls. F
 7. 👥 **Multiplayer Collaborative Flat Rooms (Real-Time Sync):**
    - Create or join shared rooms (e.g., `#KORA-402`, `#HOSTEL-304`) with a 1-click invite link. Any expense added by one person instantly updates on everyone's phones in real-time via WebSockets.
 8. 🎨 **Dual Changeable Themes:**
-   - Switch seamlessly between a sleek **Crimson Dark Mode** (deep obsidian, crimson neon, amber gold) and an electric **Bumblebee High-Voltage Mode** (high-contrast yellow & matte charcoal).
+   - Switch seamlessly between a sleek **Crimson Dark Mode** (deep obsidian, crimson neon, amber gold) and a vibrant **Neon Purple Mode** (electric violet, deep purple glow & dark glass).
 9. 🛡️ **Zero-Database Offline & Cloud Resilient:**
    - Works offline in local mode or syncs live to Google Firebase Realtime Database ($0 Spark free tier).
 

@@ -217,7 +217,7 @@ export const RoomManagerModal: React.FC<RoomManagerModalProps> = ({
 
   if (!isOpen) return null;
 
-  const isBumblebee = theme === 'bumblebee';
+  const isPurple = theme === 'purple';
   const hasDb = !!getFirebaseDb();
 
   const inviteUrl = activeRoom
@@ -327,7 +327,7 @@ export const RoomManagerModal: React.FC<RoomManagerModalProps> = ({
           <div className="flex items-center gap-2">
             <span
               className={`p-2 rounded-lg ${
-                isBumblebee ? 'bg-yellow-400/10 text-yellow-400' : 'bg-rose-500/10 text-rose-500'
+                isPurple ? 'bg-purple-500/10 text-purple-400' : 'bg-rose-500/10 text-rose-500'
               }`}
             >
               <Users className="w-5 h-5" />
@@ -356,8 +356,8 @@ export const RoomManagerModal: React.FC<RoomManagerModalProps> = ({
               onClick={() => setTab('MY_FLATS')}
               className={`px-3 py-2 text-xs font-bold border-b-2 transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
                 tab === 'MY_FLATS'
-                  ? isBumblebee
-                    ? 'border-yellow-400 text-yellow-400'
+                  ? isPurple
+                    ? 'border-purple-400 text-purple-400'
                     : 'border-rose-500 text-rose-500'
                   : 'border-transparent text-zinc-400 hover:text-white'
               }`}
@@ -372,8 +372,8 @@ export const RoomManagerModal: React.FC<RoomManagerModalProps> = ({
               onClick={() => setTab('INVITE')}
               className={`px-3 py-2 text-xs font-bold border-b-2 transition-all cursor-pointer shrink-0 ${
                 tab === 'INVITE'
-                  ? isBumblebee
-                    ? 'border-yellow-400 text-yellow-400'
+                  ? isPurple
+                    ? 'border-purple-400 text-purple-400'
                     : 'border-rose-500 text-rose-500'
                   : 'border-transparent text-zinc-400 hover:text-white'
               }`}
@@ -401,8 +401,8 @@ export const RoomManagerModal: React.FC<RoomManagerModalProps> = ({
             onClick={() => setTab('SEARCH')}
             className={`px-3 py-2 text-xs font-bold border-b-2 transition-all cursor-pointer shrink-0 flex items-center gap-1.5 ${
               tab === 'SEARCH'
-                ? isBumblebee
-                  ? 'border-yellow-400 text-yellow-400'
+                ? isPurple
+                  ? 'border-purple-400 text-purple-400'
                   : 'border-rose-500 text-rose-500'
                 : 'border-transparent text-zinc-400 hover:text-white'
             }`}
@@ -415,8 +415,8 @@ export const RoomManagerModal: React.FC<RoomManagerModalProps> = ({
             onClick={() => setTab('CREATE')}
             className={`px-3 py-2 text-xs font-bold border-b-2 transition-all cursor-pointer shrink-0 ${
               tab === 'CREATE'
-                ? isBumblebee
-                  ? 'border-yellow-400 text-yellow-400'
+                ? isPurple
+                  ? 'border-purple-400 text-purple-400'
                   : 'border-rose-500 text-rose-500'
                 : 'border-transparent text-zinc-400 hover:text-white'
             }`}
@@ -428,8 +428,8 @@ export const RoomManagerModal: React.FC<RoomManagerModalProps> = ({
             onClick={() => setTab('JOIN')}
             className={`px-3 py-2 text-xs font-bold border-b-2 transition-all cursor-pointer shrink-0 ${
               tab === 'JOIN'
-                ? isBumblebee
-                  ? 'border-yellow-400 text-yellow-400'
+                ? isPurple
+                  ? 'border-purple-400 text-purple-400'
                   : 'border-rose-500 text-rose-500'
                 : 'border-transparent text-zinc-400 hover:text-white'
             }`}
@@ -441,8 +441,8 @@ export const RoomManagerModal: React.FC<RoomManagerModalProps> = ({
             onClick={() => setTab('CONFIG')}
             className={`px-3 py-2 text-xs font-bold border-b-2 transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
               tab === 'CONFIG'
-                ? isBumblebee
-                  ? 'border-yellow-400 text-yellow-400'
+                ? isPurple
+                  ? 'border-purple-400 text-purple-400'
                   : 'border-rose-500 text-rose-500'
                 : 'border-transparent text-zinc-400 hover:text-white'
             }`}
@@ -928,8 +928,8 @@ export const RoomManagerModal: React.FC<RoomManagerModalProps> = ({
                   <button
                     onClick={handleCopyInvite}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shrink-0 ${
-                      isBumblebee
-                        ? 'bg-yellow-400 hover:bg-yellow-300 text-zinc-950'
+                      isPurple
+                        ? 'bg-purple-600 hover:bg-purple-500 text-white'
                         : 'bg-rose-600 hover:bg-rose-500 text-white'
                     }`}
                   >
@@ -1010,8 +1010,8 @@ export const RoomManagerModal: React.FC<RoomManagerModalProps> = ({
               <button
                 type="submit"
                 className={`w-full py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md ${
-                  isBumblebee
-                    ? 'bg-gradient-to-r from-yellow-400 to-amber-500 text-zinc-950 hover:from-yellow-300'
+                  isPurple
+                    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-500 shadow-purple-950/60'
                     : 'bg-gradient-to-r from-rose-600 to-rose-700 text-white hover:from-rose-500'
                 }`}
               >
@@ -1094,8 +1094,8 @@ export const RoomManagerModal: React.FC<RoomManagerModalProps> = ({
                 <button
                   type="submit"
                   className={`w-full py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md ${
-                    isBumblebee
-                      ? 'bg-gradient-to-r from-yellow-400 to-amber-500 text-zinc-950 hover:from-yellow-300'
+                    isPurple
+                      ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-500 shadow-purple-950/60'
                       : 'bg-gradient-to-r from-rose-600 to-rose-700 text-white hover:from-rose-500'
                   }`}
                 >
@@ -1115,7 +1115,7 @@ export const RoomManagerModal: React.FC<RoomManagerModalProps> = ({
                   <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-zinc-800 to-zinc-900 border border-white/10 flex items-center justify-center mx-auto shadow-inner">
                     <Lock
                       className={`w-7 h-7 ${
-                        isBumblebee ? 'text-yellow-400' : 'text-rose-500'
+                        isPurple ? 'text-purple-400' : 'text-rose-500'
                       }`}
                     />
                   </div>
@@ -1166,8 +1166,8 @@ export const RoomManagerModal: React.FC<RoomManagerModalProps> = ({
                     <button
                       type="submit"
                       className={`w-full py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md ${
-                        isBumblebee
-                          ? 'bg-gradient-to-r from-yellow-400 to-amber-500 text-zinc-950 hover:from-yellow-300'
+                        isPurple
+                          ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-500 shadow-purple-950/60'
                           : 'bg-gradient-to-r from-rose-600 to-rose-700 text-white hover:from-rose-500'
                       }`}
                     >
@@ -1258,8 +1258,8 @@ export const RoomManagerModal: React.FC<RoomManagerModalProps> = ({
                       <button
                         type="submit"
                         className={`px-3 py-1.5 rounded-lg font-bold text-xs transition cursor-pointer ${
-                          isBumblebee
-                            ? 'bg-yellow-400 text-zinc-950 hover:bg-yellow-300'
+                          isPurple
+                            ? 'bg-purple-600 text-white hover:bg-purple-500'
                             : 'bg-rose-600 text-white hover:bg-rose-500'
                         }`}
                       >
@@ -1368,8 +1368,8 @@ export const RoomManagerModal: React.FC<RoomManagerModalProps> = ({
                       <button
                         type="submit"
                         className={`px-4 py-1.5 rounded-lg font-bold text-xs transition-all cursor-pointer ${
-                          isBumblebee
-                            ? 'bg-yellow-400 hover:bg-yellow-300 text-zinc-950'
+                          isPurple
+                            ? 'bg-purple-600 hover:bg-purple-500 text-white'
                             : 'bg-rose-600 hover:bg-rose-500 text-white'
                         }`}
                       >

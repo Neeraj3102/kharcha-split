@@ -38,7 +38,7 @@ export const JoinRequestModal: React.FC<JoinRequestModalProps> = ({
 
   if (!isOpen) return null;
 
-  const isBumblebee = theme === 'bumblebee';
+  const isPurple = theme === 'purple';
   const adminDisplayName = roomMeta?.adminMemberName || 'Flat Admin';
 
   const handleSubmitRequest = async (e: React.FormEvent) => {
@@ -78,7 +78,7 @@ export const JoinRequestModal: React.FC<JoinRequestModalProps> = ({
           <div className="flex items-center gap-2.5">
             <div
               className={`p-2.5 rounded-xl ${
-                isBumblebee ? 'bg-yellow-400/10 text-yellow-400' : 'bg-rose-500/10 text-rose-500'
+                isPurple ? 'bg-purple-500/10 text-purple-400' : 'bg-rose-500/10 text-rose-500'
               }`}
             >
               <Lock className="w-5 h-5" />
@@ -212,8 +212,8 @@ export const JoinRequestModal: React.FC<JoinRequestModalProps> = ({
                 type="submit"
                 disabled={isSubmitting}
                 className={`w-full py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-lg ${
-                  isBumblebee
-                    ? 'bg-gradient-to-r from-yellow-400 to-amber-500 text-zinc-950 hover:from-yellow-300 hover:to-amber-400 shadow-yellow-950/40'
+                  isPurple
+                    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-500 hover:to-indigo-500 shadow-purple-950/40'
                     : 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white hover:from-emerald-500 hover:to-emerald-600 shadow-emerald-950/40'
                 }`}
               >

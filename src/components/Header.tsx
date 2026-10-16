@@ -1,5 +1,5 @@
 import React from 'react';
-import { Share2, PlusCircle, UserPlus, FileText, Sparkles, Zap, Flame, Users, User } from 'lucide-react';
+import { Share2, PlusCircle, UserPlus, FileText, Sparkles, Flame, Users, User } from 'lucide-react';
 import type { TimeFilter, AppTheme, UserProfile } from '../types';
 
 interface HeaderProps {
@@ -37,64 +37,53 @@ export const Header: React.FC<HeaderProps> = ({
   userProfile,
   onOpenProfile,
 }) => {
-  const isBumblebee = theme === 'bumblebee';
+  const isPurple = theme === 'purple';
 
   return (
-    <header className="relative w-full pt-6 pb-8 border-b border-white/10">
+    <header className="relative w-full pt-5 pb-7 border-b border-white/10">
       {/* Top Bar with Brand & Actions */}
       <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        {/* Brand with Theme Badge */}
+        {/* Brand with Compact Responsive Logo */}
         <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
           <div
-            className={`relative flex items-center justify-center w-11 h-11 sm:w-12 sm:h-12 rounded-xl p-[1px] shrink-0 ${
-              isBumblebee
-                ? 'bg-gradient-to-br from-yellow-300 via-amber-400 to-yellow-500 shadow-lg shadow-yellow-950/60'
+            className={`relative flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 rounded-xl p-[1px] shrink-0 ${
+              isPurple
+                ? 'bg-gradient-to-br from-purple-400 via-purple-600 to-indigo-600 shadow-lg shadow-purple-950/60'
                 : 'bg-gradient-to-br from-rose-600 via-rose-700 to-amber-600 neon-glow-red'
             }`}
           >
             <div className="w-full h-full bg-[#0d0d12] rounded-xl flex items-center justify-center">
               <span
-                className={`font-heading text-xl sm:text-2xl font-black tracking-tighter ${
-                  isBumblebee ? 'text-yellow-400' : 'text-rose-500'
+                className={`font-heading text-lg sm:text-xl font-black tracking-tighter ${
+                  isPurple ? 'text-purple-400' : 'text-rose-500'
                 }`}
               >
-                {isBumblebee ? '⚡' : '₹'}
+                {isPurple ? '⚡' : '₹'}
               </span>
             </div>
             {/* Pulsing micro dot */}
             <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5 sm:h-3 sm:w-3">
               <span
                 className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
-                  isBumblebee ? 'bg-yellow-400' : 'bg-rose-500'
+                  isPurple ? 'bg-purple-400' : 'bg-rose-500'
                 }`}
               ></span>
               <span
                 className={`relative inline-flex rounded-full h-2.5 w-2.5 sm:h-3 sm:w-3 ${
-                  isBumblebee ? 'bg-yellow-500' : 'bg-rose-600'
+                  isPurple ? 'bg-purple-500' : 'bg-rose-600'
                 }`}
               ></span>
             </span>
           </div>
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-xl sm:text-3xl font-extrabold tracking-tight text-white flex items-center gap-1.5 shrink-0">
-                <span>KHARCHA</span>
-                <span className={isBumblebee ? 'text-yellow-400' : 'text-rose-500'}>
-                  SPLIT
-                </span>
-              </h1>
-              <span
-                className={`text-[9px] sm:text-[10px] uppercase font-mono tracking-widest px-2 py-0.5 rounded-full border shrink-0 ${
-                  isBumblebee
-                    ? 'bg-yellow-950/80 text-yellow-400 border-yellow-700/60'
-                    : 'bg-rose-950/80 text-rose-400 border-rose-800/60'
-                }`}
-              >
-                {isBumblebee ? 'Bumblebee' : 'Crimson Dark'}
+          <div className="min-w-0">
+            <h1 className="text-lg sm:text-2xl font-extrabold tracking-tight text-white flex items-center gap-1.5 shrink-0 leading-none">
+              <span>KHARCHA</span>
+              <span className={isPurple ? 'text-purple-400' : 'text-rose-500'}>
+                SPLIT
               </span>
-            </div>
-            <p className="text-[11px] sm:text-xs text-zinc-400 font-medium truncate mt-0.5">
-              Bachelor & Flatmate Ledger • Instant UPI Settle
+            </h1>
+            <p className="text-[10px] sm:text-xs text-zinc-400 font-medium truncate mt-1">
+              Flatmate Ledger • Instant UPI Settle
             </p>
           </div>
         </div>
@@ -105,16 +94,16 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             onClick={onToggleTheme}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold border transition-all cursor-pointer shrink-0 ${
-              isBumblebee
-                ? 'bg-yellow-950/40 text-yellow-300 border-yellow-700/80 hover:bg-yellow-900/40'
+              isPurple
+                ? 'bg-purple-950/50 text-purple-300 border-purple-700/80 hover:bg-purple-900/50 hover:border-purple-500 shadow-sm'
                 : 'bg-rose-950/40 text-rose-300 border-rose-800/80 hover:bg-rose-900/40'
             }`}
-            title="Toggle between Crimson Dark and Bumblebee themes"
+            title="Toggle between Crimson Dark and Purple themes"
           >
-            {isBumblebee ? (
+            {isPurple ? (
               <>
-                <Zap className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />
-                <span>Bumblebee</span>
+                <Sparkles className="w-3.5 h-3.5 text-purple-400 fill-purple-400" />
+                <span>Purple</span>
               </>
             ) : (
               <>
@@ -186,8 +175,8 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             onClick={onOpenAddExpense}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-lg shrink-0 ${
-              isBumblebee
-                ? 'bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-300 hover:to-amber-400 text-zinc-950 shadow-yellow-950/60'
+              isPurple
+                ? 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-purple-950/60'
                 : 'bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white shadow-rose-950/50 hover:shadow-rose-600/30'
             }`}
           >
@@ -201,7 +190,7 @@ export const Header: React.FC<HeaderProps> = ({
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-zinc-900/80 hover:bg-zinc-800 text-zinc-200 border border-zinc-700/60 transition-all cursor-pointer shrink-0"
             title="Export full ledger as PDF or copy shareable link"
           >
-            <Share2 className={`w-4 h-4 ${isBumblebee ? 'text-yellow-400' : 'text-rose-400'}`} />
+            <Share2 className={`w-4 h-4 ${isPurple ? 'text-purple-400' : 'text-rose-400'}`} />
             <span>PDF Export</span>
           </button>
 
@@ -222,8 +211,8 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="flex items-center gap-3.5">
             <div
               className={`p-3 rounded-xl border shrink-0 ${
-                isBumblebee
-                  ? 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400'
+                isPurple
+                  ? 'bg-purple-500/10 border-purple-500/20 text-purple-400'
                   : 'bg-rose-500/10 border-rose-500/20 text-rose-400'
               }`}
             >
@@ -238,7 +227,7 @@ export const Header: React.FC<HeaderProps> = ({
                   : "This Month's Spend"}
               </div>
               <div className="text-xl sm:text-3xl font-extrabold text-white font-mono tracking-tight flex items-baseline gap-1">
-                <span className={isBumblebee ? 'text-yellow-400' : 'text-rose-500'}>₹</span>
+                <span className={isPurple ? 'text-purple-400' : 'text-rose-500'}>₹</span>
                 {totalGroupSpend.toLocaleString('en-IN', {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
@@ -253,8 +242,8 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={() => setTimeFilter('ALL')}
               className={`flex-1 md:flex-initial px-3 py-1.5 rounded-lg text-xs font-semibold text-center transition-all cursor-pointer ${
                 timeFilter === 'ALL'
-                  ? isBumblebee
-                    ? 'bg-yellow-400 text-zinc-950 font-bold shadow-md shadow-yellow-950'
+                  ? isPurple
+                    ? 'bg-purple-600 text-white font-bold shadow-md shadow-purple-950'
                     : 'bg-rose-600 text-white shadow-md shadow-rose-900/40'
                   : 'text-zinc-400 hover:text-white'
               }`}
@@ -265,8 +254,8 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={() => setTimeFilter('THIS_MONTH')}
               className={`flex-1 md:flex-initial px-3 py-1.5 rounded-lg text-xs font-semibold text-center transition-all cursor-pointer ${
                 timeFilter === 'THIS_MONTH'
-                  ? isBumblebee
-                    ? 'bg-yellow-400 text-zinc-950 font-bold shadow-md shadow-yellow-950'
+                  ? isPurple
+                    ? 'bg-purple-600 text-white font-bold shadow-md shadow-purple-950'
                     : 'bg-rose-600 text-white shadow-md shadow-rose-900/40'
                   : 'text-zinc-400 hover:text-white'
               }`}
@@ -277,8 +266,8 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={() => setTimeFilter('THIS_WEEK')}
               className={`flex-1 md:flex-initial px-3 py-1.5 rounded-lg text-xs font-semibold text-center transition-all cursor-pointer ${
                 timeFilter === 'THIS_WEEK'
-                  ? isBumblebee
-                    ? 'bg-yellow-400 text-zinc-950 font-bold shadow-md shadow-yellow-950'
+                  ? isPurple
+                    ? 'bg-purple-600 text-white font-bold shadow-md shadow-purple-950'
                     : 'bg-rose-600 text-white shadow-md shadow-rose-900/40'
                   : 'text-zinc-400 hover:text-white'
               }`}

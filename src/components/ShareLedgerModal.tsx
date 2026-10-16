@@ -59,7 +59,7 @@ export const ShareLedgerModal: React.FC<ShareLedgerModalProps> = ({
     }
   };
 
-  const isBumblebee = theme === 'bumblebee';
+  const isPurple = theme === 'purple';
 
   return (
     <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
@@ -69,7 +69,7 @@ export const ShareLedgerModal: React.FC<ShareLedgerModalProps> = ({
           <div className="flex items-center gap-2">
             <span
               className={`p-2 rounded-lg ${
-                isBumblebee ? 'bg-yellow-400/10 text-yellow-400' : 'bg-rose-500/10 text-rose-500'
+                isPurple ? 'bg-purple-500/10 text-purple-400' : 'bg-rose-500/10 text-rose-500'
               }`}
             >
               <Share2 className="w-5 h-5" />
@@ -92,7 +92,7 @@ export const ShareLedgerModal: React.FC<ShareLedgerModalProps> = ({
           <div className="flex items-start justify-between gap-3">
             <div>
               <div className="text-xs font-bold text-white flex items-center gap-1.5">
-                <FileDown className={`w-4 h-4 ${isBumblebee ? 'text-yellow-400' : 'text-rose-500'}`} />
+                <FileDown className={`w-4 h-4 ${isPurple ? 'text-purple-400' : 'text-rose-500'}`} />
                 <span>Download & Share as PDF</span>
               </div>
               <p className="text-[11px] text-zinc-400 mt-0.5">
@@ -105,8 +105,8 @@ export const ShareLedgerModal: React.FC<ShareLedgerModalProps> = ({
             onClick={handleDownloadPdf}
             disabled={pdfGenerating}
             className={`w-full py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md ${
-              isBumblebee
-                ? 'bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-300 hover:to-amber-400 text-zinc-950 shadow-yellow-950'
+              isPurple
+                ? 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-purple-950'
                 : 'bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white shadow-rose-950'
             }`}
           >

@@ -71,11 +71,11 @@ export function App() {
   );
   const [copiedRoomLink, setCopiedRoomLink] = useState(false);
 
-  // Changeable Theme (Weeknd vs Bumblebee)
+  // Changeable Theme (Weeknd vs Purple)
   const [theme, setTheme] = useState<AppTheme>(() => {
     try {
       const saved = localStorage.getItem('kharchasplit_theme');
-      if (saved === 'weeknd' || saved === 'bumblebee') return saved;
+      if (saved === 'weeknd' || saved === 'purple') return saved;
     } catch {
       // ignore
     }
@@ -682,7 +682,7 @@ export function App() {
   };
 
   const toggleTheme = () => {
-    setTheme((prev) => (prev === 'weeknd' ? 'bumblebee' : 'weeknd'));
+    setTheme((prev) => (prev === 'weeknd' ? 'purple' : 'weeknd'));
   };
 
   const handleCopyRoomInvite = () => {
@@ -694,7 +694,7 @@ export function App() {
   };
 
   const liveShareUrl = compressStateToUrl(state);
-  const isBumblebee = theme === 'bumblebee';
+  const isPurple = theme === 'purple';
 
   return (
     <div className={`min-h-screen bg-[#08080a] bg-app-grid text-zinc-100 flex flex-col font-sans theme-${theme}`}>
@@ -803,8 +803,8 @@ export function App() {
               <button
                 onClick={() => setIsRoomManagerOpen(true)}
                 className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-sm shrink-0 ${
-                  isBumblebee
-                    ? 'bg-yellow-400 text-zinc-950 hover:bg-yellow-300'
+                  isPurple
+                    ? 'bg-purple-600 text-white hover:bg-purple-500 shadow-purple-950/50'
                     : 'bg-rose-600 text-white hover:bg-rose-500'
                 }`}
               >
@@ -849,8 +849,8 @@ export function App() {
           <div className="glass-panel rounded-2xl p-8 sm:p-12 text-center border border-white/10 space-y-4 max-w-xl mx-auto my-8">
             <div
               className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto border shadow-lg ${
-                isBumblebee
-                  ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20 shadow-yellow-950/40'
+                isPurple
+                  ? 'bg-purple-500/10 text-purple-400 border-purple-500/20 shadow-purple-950/40'
                   : 'bg-rose-500/10 text-rose-500 border-rose-500/20 shadow-rose-950/40'
               }`}
             >
@@ -868,8 +868,8 @@ export function App() {
               <button
                 onClick={() => setIsAddMemberOpen(true)}
                 className={`px-5 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer shadow-lg ${
-                  isBumblebee
-                    ? 'bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-300 hover:to-amber-400 text-zinc-950 shadow-yellow-950'
+                  isPurple
+                    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-purple-950'
                     : 'bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white shadow-rose-950'
                 }`}
               >
@@ -932,7 +932,7 @@ export function App() {
           <div className="flex items-center gap-2">
             <span className="font-heading font-bold text-white tracking-wider">
               KHARCHA
-              <span className={isBumblebee ? 'text-yellow-400' : 'text-rose-500'}>
+              <span className={isPurple ? 'text-purple-400' : 'text-rose-500'}>
                 SPLIT
               </span>
             </span>
@@ -991,8 +991,8 @@ export function App() {
             <button
               onClick={() => setIsAddExpenseOpen(true)}
               className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-extrabold shadow-lg transition-all cursor-pointer active:scale-95 ${
-                isBumblebee
-                  ? 'bg-gradient-to-r from-yellow-400 to-amber-500 text-zinc-950 shadow-yellow-950/60'
+                isPurple
+                  ? 'bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-600 text-white shadow-purple-950/80'
                   : 'bg-gradient-to-r from-rose-600 via-rose-700 to-amber-600 text-white shadow-rose-950/80'
               }`}
             >

@@ -44,7 +44,7 @@ export interface QuickTag {
 
 export type TimeFilter = 'ALL' | 'THIS_WEEK' | 'THIS_MONTH';
 
-export type AppTheme = 'weeknd' | 'bumblebee';
+export type AppTheme = 'weeknd' | 'purple';
 
 export interface AppState {
   members: Member[];

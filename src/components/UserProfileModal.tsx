@@ -50,7 +50,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
   theme,
   onOpenTutorial,
 }) => {
-  const isBumblebee = theme === 'bumblebee';
+  const isPurple = theme === 'purple';
 
   const linkedMember = members.find((m) => m.id === myMemberId);
 
@@ -176,8 +176,8 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
           <div className="flex items-center gap-2.5">
             <span
               className={`p-2 rounded-xl border ${
-                isBumblebee
-                  ? 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400'
+                isPurple
+                  ? 'bg-purple-500/10 border-purple-500/20 text-purple-400'
                   : 'bg-rose-500/10 border-rose-500/20 text-rose-500'
               }`}
             >
@@ -194,7 +194,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
             onClick={onClose}
             className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all cursor-pointer"
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
@@ -205,8 +205,8 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
             onClick={() => setActiveTab('DETAILS')}
             className={`pb-2.5 px-3 border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
               activeTab === 'DETAILS'
-                ? isBumblebee
-                  ? 'border-yellow-400 text-yellow-300 font-bold'
+                ? isPurple
+                  ? 'border-purple-400 text-purple-300 font-bold'
                   : 'border-rose-500 text-rose-400 font-bold'
                 : 'border-transparent text-zinc-400 hover:text-zinc-200'
             }`}
@@ -220,8 +220,8 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
             onClick={() => setActiveTab('QR')}
             className={`pb-2.5 px-3 border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
               activeTab === 'QR'
-                ? isBumblebee
-                  ? 'border-yellow-400 text-yellow-300 font-bold'
+                ? isPurple
+                  ? 'border-purple-400 text-purple-300 font-bold'
                   : 'border-rose-500 text-rose-400 font-bold'
                 : 'border-transparent text-zinc-400 hover:text-zinc-200'
             }`}
@@ -235,8 +235,8 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
             onClick={() => setActiveTab('LEDGER')}
             className={`pb-2.5 px-3 border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
               activeTab === 'LEDGER'
-                ? isBumblebee
-                  ? 'border-yellow-400 text-yellow-300 font-bold'
+                ? isPurple
+                  ? 'border-purple-400 text-purple-300 font-bold'
                   : 'border-rose-500 text-rose-400 font-bold'
                 : 'border-transparent text-zinc-400 hover:text-zinc-200'
             }`}
@@ -390,8 +390,8 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
               <button
                 type="submit"
                 className={`w-full py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-lg ${
-                  isBumblebee
-                    ? 'bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-300 hover:to-amber-400 text-zinc-950 shadow-yellow-950/60'
+                  isPurple
+                    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-purple-950/60'
                     : 'bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white shadow-rose-950/60'
                 }`}
               >
