@@ -37,6 +37,7 @@ interface AdminPortalModalProps {
   onClose: () => void;
   theme: AppTheme;
   onSwitchToRoom: (roomId: string, roomName: string) => void;
+  onRoomPurged?: (roomId: string) => void;
 }
 
 export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
@@ -44,6 +45,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
   onClose,
   theme,
   onSwitchToRoom,
+  onRoomPurged,
 }) => {
   // Auth state
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
@@ -157,6 +159,9 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
       showNotification(`Room #${roomId} was permanently purged from the cloud.`);
       if (selectedRoomId === roomId) {
         setSelectedRoomId(null);
+      }
+      if (onRoomPurged) {
+        onRoomPurged(roomId);
       }
     } else {
       showNotification(`Failed to delete room #${roomId}. Check cloud permissions.`, true);

@@ -26,6 +26,9 @@ import {
   getActiveRoomId,
   saveActiveRoomId,
   clearActiveRoom,
+  removeSavedRoom,
+  clearRoomAdminKey,
+  clearMyMemberId,
   subscribeToRoomState,
   subscribeToAllRooms,
   pushRoomState,
@@ -213,9 +216,16 @@ export function App() {
     }
 
     // Non-admin devices: listen for approval status from the room admin
-    const unsubApproval = subscribeToDeviceApproval(activeRoom.roomId, (status) => {
-      setDeviceApprovalStatus(status);
-    });
+    const unsubApproval = subscribeToDeviceApproval(
+      activeRoom.roomId,
+      (status) => {
+        setDeviceApprovalStatus(status);
+      },
+      () => {
+        // Room does not exist or was purged from Firebase!
+        handleRoomPurgedDisconnect(activeRoom.roomId);
+      }
+    );
 
     return () => {
       if (unsubApproval) unsubApproval();
@@ -227,6 +237,21 @@ export function App() {
   useEffect(() => {
     activeRoomRef.current = activeRoom;
   }, [activeRoom]);
+
+  // Cleanly disconnect and wipe local cache when a room is purged or doesn't exist
+  const handleRoomPurgedDisconnect = useCallback((roomId?: string) => {
+    const targetId = roomId || activeRoomRef.current?.roomId;
+    if (targetId) {
+      removeSavedRoom(targetId);
+      clearRoomAdminKey(targetId);
+      clearMyMemberId(targetId);
+    }
+    clearActiveRoom();
+    setActiveRoom(null);
+    setRoomMeta(null);
+    setDeviceApprovalStatus('APPROVED');
+    setState(loadInitialState());
+  }, []);
 
   // Open Master Admin Portal or switch room via URL hash e.g. #admin or #room=710
   useEffect(() => {
@@ -287,6 +312,10 @@ export function App() {
       },
       (err) => {
         console.warn('Realtime cloud sync fallback:', err);
+      },
+      () => {
+        // Room was deleted/purged from Firebase or does not exist!
+        handleRoomPurgedDisconnect(activeRoom.roomId);
       }
     );
 
@@ -1165,6 +1194,11 @@ export function App() {
         theme={theme}
         onSwitchToRoom={(roomId, roomName) => {
           setActiveRoom({ roomId, roomName });
+        }}
+        onRoomPurged={(purgedId) => {
+          if (activeRoom && activeRoom.roomId.toUpperCase() === purgedId.toUpperCase()) {
+            handleRoomPurgedDisconnect(purgedId);
+          }
         }}
       />
     </div>

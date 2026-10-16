@@ -509,7 +509,8 @@ export async function requestJoinRoom(
  */
 export function subscribeToDeviceApproval(
   roomId: string,
-  onStatusChange: (status: 'APPROVED' | 'PENDING' | 'REJECTED' | 'NONE') => void
+  onStatusChange: (status: 'APPROVED' | 'PENDING' | 'REJECTED' | 'NONE') => void,
+  onRoomDeleted?: () => void
 ): Unsubscribe | null {
   const cleanId = roomId.trim().toUpperCase();
   const deviceId = getDeviceId();
@@ -524,7 +525,11 @@ export function subscribeToDeviceApproval(
   return onValue(roomRef, (snapshot) => {
     const room = snapshot.val();
     if (!room) {
-      onStatusChange('NONE');
+      if (onRoomDeleted) {
+        onRoomDeleted();
+      } else {
+        onStatusChange('NONE');
+      }
       return;
     }
 
@@ -654,22 +659,24 @@ export function safeArray<T>(val: any): T[] {
 export function subscribeToRoomState(
   roomId: string,
   onUpdate: (state: AppState, meta?: RoomMeta) => void,
-  onError?: (err: Error) => void
+  onError?: (err: Error) => void,
+  onRoomDeleted?: () => void
 ): Unsubscribe | null {
   const db = getFirebaseDb();
   if (!db) return null;
 
-  const roomRef = ref(db, `kharcha_rooms/${roomId}`);
+  const cleanId = roomId.trim().toUpperCase();
+  const roomRef = ref(db, `kharcha_rooms/${cleanId}`);
 
   return onValue(
     roomRef,
     (snapshot) => {
-      const roomData = snapshot.val();
-      if (roomData) {
+      if (snapshot.exists()) {
+        const roomData = snapshot.val();
         const val = roomData.state || {};
         const meta: RoomMeta = roomData.meta || {
-          id: roomId,
-          name: `Flat ${roomId}`,
+          id: cleanId,
+          name: `Flat ${cleanId}`,
           updatedAt: new Date().toISOString(),
         };
 
@@ -683,16 +690,20 @@ export function subscribeToRoomState(
           meta
         );
       } else {
-        // Fresh or empty room
-        onUpdate(
-          {
-            members: [],
-            expenses: [],
-            settledTransactions: [],
-            customTags: [],
-          },
-          { id: roomId, name: `Flat ${roomId}` }
-        );
+        // Room was deleted/purged from Firebase or does not exist
+        if (onRoomDeleted) {
+          onRoomDeleted();
+        } else {
+          onUpdate(
+            {
+              members: [],
+              expenses: [],
+              settledTransactions: [],
+              customTags: [],
+            },
+            { id: cleanId, name: `Flat ${cleanId}` }
+          );
+        }
       }
     },
     (error) => {
@@ -873,14 +884,27 @@ export function subscribeToAllRooms(
  */
 export async function deleteRoom(roomId: string): Promise<boolean> {
   const db = getFirebaseDb();
-  if (!db) return false;
+  const cleanId = roomId.trim().toUpperCase();
+
+  // 1. Clean up local persistence for this room
+  removeSavedRoom(cleanId);
+  clearRoomAdminKey(cleanId);
+  clearMyMemberId(cleanId);
+
+  // 2. If this room is currently active in localStorage or URL, clear it!
+  const active = getActiveRoomId();
+  if (active && active.roomId.toUpperCase() === cleanId) {
+    clearActiveRoom();
+  }
+
+  if (!db) return true;
 
   try {
-    const roomRef = ref(db, `kharcha_rooms/${roomId}`);
+    const roomRef = ref(db, `kharcha_rooms/${cleanId}`);
     await remove(roomRef);
     return true;
   } catch (err) {
-    console.error(`Failed to delete room ${roomId}:`, err);
+    console.error(`Failed to delete room ${cleanId}:`, err);
     return false;
   }
 }
