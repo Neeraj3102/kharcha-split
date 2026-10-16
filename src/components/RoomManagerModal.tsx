@@ -17,6 +17,10 @@ import {
   Eye,
   EyeOff,
   RotateCcw,
+  Building2,
+  Crown,
+  ArrowRight,
+  Trash2,
 } from 'lucide-react';
 import type { AppState, AppTheme } from '../types';
 import {
@@ -29,8 +33,10 @@ import {
   saveRoomAdminKey,
   claimRoomAdminKey,
   subscribeToAllRooms,
+  getSavedRooms,
+  removeSavedRoom,
 } from '../utils/firebase';
-import type { FirebaseConfig, RoomMeta } from '../utils/firebase';
+import type { FirebaseConfig, RoomMeta, SavedRoom } from '../utils/firebase';
 
 interface RoomManagerModalProps {
   isOpen: boolean;
@@ -41,7 +47,9 @@ interface RoomManagerModalProps {
   theme: AppTheme;
   roomMeta?: RoomMeta | null;
   isRoomAdmin?: boolean;
+  myMemberId?: string | null;
   onAdminClaimed?: () => void;
+  onTransferAdmin?: (newAdminMemberId: string, newAdminMemberName: string) => void;
 }
 
 export const RoomManagerModal: React.FC<RoomManagerModalProps> = ({
@@ -51,12 +59,25 @@ export const RoomManagerModal: React.FC<RoomManagerModalProps> = ({
   setActiveRoom,
   state,
   theme,
+  roomMeta,
   isRoomAdmin = true,
+  myMemberId,
   onAdminClaimed,
+  onTransferAdmin,
 }) => {
-  const [tab, setTab] = useState<'INVITE' | 'CREATE' | 'JOIN' | 'CONFIG'>(
-    activeRoom ? 'INVITE' : 'JOIN'
-  );
+  const [savedRooms, setSavedRooms] = useState<SavedRoom[]>(getSavedRooms);
+  const [tab, setTab] = useState<'MY_FLATS' | 'INVITE' | 'CREATE' | 'JOIN' | 'CONFIG'>(() => {
+    const saved = getSavedRooms();
+    if (saved.length > 1) return 'MY_FLATS';
+    return activeRoom ? 'INVITE' : 'JOIN';
+  });
+
+  // Keep saved rooms list fresh
+  useEffect(() => {
+    if (isOpen) {
+      setSavedRooms(getSavedRooms());
+    }
+  }, [isOpen, activeRoom]);
 
   // Realtime discovery of rooms in Firebase for 1-tap mobile joining
   const [cloudRooms, setCloudRooms] = useState<
@@ -89,6 +110,7 @@ export const RoomManagerModal: React.FC<RoomManagerModalProps> = ({
   const [joinCode, setJoinCode] = useState('');
   const [copied, setCopied] = useState(false);
   const [statusMsg, setStatusMsg] = useState<{ text: string; isError?: boolean } | null>(null);
+  const [transferTargetId, setTransferTargetId] = useState('');
 
   // Claim Admin State
   const [claimPinInput, setClaimPinInput] = useState('');
@@ -317,11 +339,27 @@ export const RoomManagerModal: React.FC<RoomManagerModalProps> = ({
         </div>
 
         {/* Tab Navigation */}
-        <div className="px-6 pt-3 flex items-center gap-1.5 border-b border-white/5 overflow-x-auto">
+        <div className="px-6 pt-3 flex items-center gap-1.5 border-b border-white/5 overflow-x-auto no-scrollbar">
+          {savedRooms.length > 0 && (
+            <button
+              onClick={() => setTab('MY_FLATS')}
+              className={`px-3 py-2 text-xs font-bold border-b-2 transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
+                tab === 'MY_FLATS'
+                  ? isBumblebee
+                    ? 'border-yellow-400 text-yellow-400'
+                    : 'border-rose-500 text-rose-500'
+                  : 'border-transparent text-zinc-400 hover:text-white'
+              }`}
+            >
+              <Building2 className="w-3.5 h-3.5" />
+              <span>My Flats ({savedRooms.length})</span>
+            </button>
+          )}
+
           {activeRoom && (
             <button
               onClick={() => setTab('INVITE')}
-              className={`px-3 py-2 text-xs font-bold border-b-2 transition-all cursor-pointer ${
+              className={`px-3 py-2 text-xs font-bold border-b-2 transition-all cursor-pointer shrink-0 ${
                 tab === 'INVITE'
                   ? isBumblebee
                     ? 'border-yellow-400 text-yellow-400'
@@ -329,13 +367,13 @@ export const RoomManagerModal: React.FC<RoomManagerModalProps> = ({
                   : 'border-transparent text-zinc-400 hover:text-white'
               }`}
             >
-              Invite Link
+              Room Details
             </button>
           )}
 
           <button
             onClick={() => setTab('CREATE')}
-            className={`px-3 py-2 text-xs font-bold border-b-2 transition-all cursor-pointer ${
+            className={`px-3 py-2 text-xs font-bold border-b-2 transition-all cursor-pointer shrink-0 ${
               tab === 'CREATE'
                 ? isBumblebee
                   ? 'border-yellow-400 text-yellow-400'
@@ -343,12 +381,12 @@ export const RoomManagerModal: React.FC<RoomManagerModalProps> = ({
                 : 'border-transparent text-zinc-400 hover:text-white'
             }`}
           >
-            Create New Flat
+            Create Flat
           </button>
 
           <button
             onClick={() => setTab('JOIN')}
-            className={`px-3 py-2 text-xs font-bold border-b-2 transition-all cursor-pointer ${
+            className={`px-3 py-2 text-xs font-bold border-b-2 transition-all cursor-pointer shrink-0 ${
               tab === 'JOIN'
                 ? isBumblebee
                   ? 'border-yellow-400 text-yellow-400'
@@ -356,12 +394,12 @@ export const RoomManagerModal: React.FC<RoomManagerModalProps> = ({
                 : 'border-transparent text-zinc-400 hover:text-white'
             }`}
           >
-            Join Existing Room
+            Join Flat
           </button>
 
           <button
             onClick={() => setTab('CONFIG')}
-            className={`px-3 py-2 text-xs font-bold border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`px-3 py-2 text-xs font-bold border-b-2 transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
               tab === 'CONFIG'
                 ? isBumblebee
                   ? 'border-yellow-400 text-yellow-400'
@@ -374,7 +412,7 @@ export const RoomManagerModal: React.FC<RoomManagerModalProps> = ({
             ) : (
               <Lock className="w-3.5 h-3.5 text-zinc-400" />
             )}
-            <span>Cloud Setup {hasDb ? '🟢' : '⚙️'}</span>
+            <span>Setup {hasDb ? '🟢' : '⚙️'}</span>
           </button>
         </div>
 
@@ -393,6 +431,160 @@ export const RoomManagerModal: React.FC<RoomManagerModalProps> = ({
             </div>
           )}
 
+          {/* TAB 0: MY FLATS (MULTI-ROOM SWITCHER) */}
+          {tab === 'MY_FLATS' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
+                    <Building2 className="w-4 h-4 text-emerald-400" />
+                    <span>Your Saved Flats</span>
+                  </h3>
+                  <p className="text-[11px] text-zinc-400">
+                    Switch between your different flats and apartments in 1 tap
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setTab('CREATE')}
+                  className="px-2.5 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-[11px] font-semibold border border-zinc-700 transition-all cursor-pointer flex items-center gap-1"
+                >
+                  <Plus className="w-3 h-3" />
+                  <span>New Flat</span>
+                </button>
+              </div>
+
+              {savedRooms.length === 0 ? (
+                <div className="p-6 rounded-xl bg-zinc-900/40 border border-dashed border-zinc-800 text-center space-y-2">
+                  <p className="text-xs text-zinc-400">No flats saved on this device yet.</p>
+                  <button
+                    onClick={() => setTab('JOIN')}
+                    className="text-xs text-emerald-400 hover:underline font-semibold"
+                  >
+                    Join a Flat using Room Code
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {savedRooms.map((room) => {
+                    const isActive = activeRoom?.roomId === room.roomId;
+
+                    return (
+                      <div
+                        key={room.roomId}
+                        className={`p-3.5 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all ${
+                          isActive
+                            ? 'bg-emerald-950/25 border-emerald-700/60 shadow-sm'
+                            : 'bg-zinc-900/60 border-white/5 hover:border-zinc-700'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 border ${
+                              isActive
+                                ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                                : 'bg-zinc-800 text-zinc-400 border-zinc-700'
+                            }`}
+                          >
+                            <Building2 className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <div className="text-xs font-bold text-white flex items-center gap-2 flex-wrap">
+                              <span>{room.roomName}</span>
+                              <span className="font-mono text-[10px] text-zinc-400 bg-zinc-800/80 px-1.5 py-0.5 rounded border border-zinc-700">
+                                #{room.roomId}
+                              </span>
+                              {isActive && (
+                                <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-300 bg-emerald-950 px-2 py-0.5 rounded-full border border-emerald-700 flex items-center gap-1">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                  <span>Active Flat</span>
+                                </span>
+                              )}
+                              {room.isAdmin && (
+                                <span className="text-[9px] font-bold text-amber-300 bg-amber-950/80 px-1.5 py-0.5 rounded border border-amber-800/60 flex items-center gap-0.5">
+                                  <Crown className="w-2.5 h-2.5 text-amber-400" />
+                                  <span>Admin</span>
+                                </span>
+                              )}
+                            </div>
+                            {room.myMemberName && (
+                              <div className="text-[10px] text-zinc-400 mt-0.5">
+                                Logged in as: <strong className="text-zinc-200">{room.myMemberName}</strong>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 self-end sm:self-center">
+                          {isActive ? (
+                            <button
+                              type="button"
+                              onClick={() => setTab('INVITE')}
+                              className="px-3 py-1.5 rounded-lg bg-emerald-950/80 text-emerald-300 border border-emerald-700/80 text-xs font-bold transition-all cursor-pointer"
+                            >
+                              Room Details
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                saveActiveRoomId(room.roomId, room.roomName);
+                                setActiveRoom({ roomId: room.roomId, roomName: room.roomName });
+                                setStatusMsg({ text: `Switched to ${room.roomName} (#${room.roomId})!` });
+                                setSavedRooms(getSavedRooms());
+                              }}
+                              className="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-emerald-900/60 hover:text-emerald-300 hover:border-emerald-700/60 text-zinc-200 border border-zinc-700 text-xs font-bold transition-all cursor-pointer flex items-center gap-1"
+                            >
+                              <span>Switch</span>
+                              <ArrowRight className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (window.confirm(`Remove "${room.roomName}" from your saved flats list?`)) {
+                                removeSavedRoom(room.roomId);
+                                setSavedRooms(getSavedRooms());
+                                if (isActive) {
+                                  clearActiveRoom();
+                                  setActiveRoom(null);
+                                }
+                              }
+                            }}
+                            className="p-1.5 rounded-lg text-zinc-500 hover:text-rose-400 hover:bg-rose-950/40 transition-all cursor-pointer"
+                            title="Forget / Remove from saved flats"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              <div className="pt-2 flex items-center justify-between text-xs border-t border-white/5">
+                <button
+                  type="button"
+                  onClick={() => setTab('JOIN')}
+                  className="text-emerald-400 hover:underline font-semibold"
+                >
+                  + Join with Room Code
+                </button>
+                {activeRoom && (
+                  <button
+                    type="button"
+                    onClick={handleLeaveRoom}
+                    className="text-zinc-500 hover:text-rose-400 font-medium"
+                  >
+                    Switch to Local Mode
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* TAB 1: INVITE LINK (FOR ACTIVE ROOM) */}
           {tab === 'INVITE' && activeRoom && (
             <div className="space-y-4">
@@ -407,7 +599,7 @@ export const RoomManagerModal: React.FC<RoomManagerModalProps> = ({
               </div>
 
               {/* AUTHORITY & ROLE BADGE */}
-              <div className="p-3.5 rounded-xl bg-zinc-900/90 border border-white/5 space-y-2 text-xs">
+              <div className="p-3.5 rounded-xl bg-zinc-900/90 border border-white/5 space-y-3 text-xs">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className={`p-1.5 rounded-lg text-sm ${isRoomAdmin ? 'bg-amber-500/20 text-amber-400' : 'bg-zinc-800 text-zinc-400'}`}>
@@ -434,6 +626,52 @@ export const RoomManagerModal: React.FC<RoomManagerModalProps> = ({
                     </div>
                   </div>
                 </div>
+
+                {/* TRANSFER ROOM ADMIN AUTHORITY TO ANOTHER FLATMATE */}
+                {isRoomAdmin && state.members.length > 1 && onTransferAdmin && (
+                  <div className="pt-2 border-t border-white/5 space-y-2">
+                    <label className="block text-[11px] font-semibold text-zinc-300 flex items-center gap-1.5">
+                      <Crown className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Transfer Room Admin Authority:</span>
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <select
+                        value={transferTargetId}
+                        onChange={(e) => setTransferTargetId(e.target.value)}
+                        className="flex-1 px-3 py-1.5 rounded-lg bg-zinc-950 border border-zinc-700 text-white text-xs focus:outline-none focus:border-amber-400"
+                      >
+                        <option value="">-- Select Flatmate to Make Admin --</option>
+                        {state.members
+                          .filter((m) => m.id !== myMemberId && m.id !== roomMeta?.adminMemberId)
+                          .map((m) => (
+                            <option key={m.id} value={m.id}>
+                              {m.name} ({m.upiId})
+                            </option>
+                          ))}
+                      </select>
+                      <button
+                        type="button"
+                        disabled={!transferTargetId}
+                        onClick={() => {
+                          const target = state.members.find((m) => m.id === transferTargetId);
+                          if (!target) return;
+                          if (
+                            window.confirm(
+                              `👑 Transfer Room Admin authority to ${target.name}?\n\n${target.name} will become the new Room Admin with exclusive delete and management rights. You will become a regular member.`
+                            )
+                          ) {
+                            onTransferAdmin(target.id, target.name);
+                            setStatusMsg({ text: `Admin authority transferred to ${target.name}!` });
+                            setTransferTargetId('');
+                          }
+                        }}
+                        className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 disabled:opacity-40 disabled:cursor-not-allowed text-zinc-950 text-xs font-bold transition-all cursor-pointer"
+                      >
+                        Transfer Admin
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 {!isRoomAdmin && (
                   <form onSubmit={handleClaimAdmin} className="pt-2 border-t border-white/5 space-y-2">

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, UserPlus, Trash2, ShieldCheck, Phone, AlertTriangle, RotateCcw } from 'lucide-react';
+import { X, UserPlus, Trash2, ShieldCheck, Phone, AlertTriangle, RotateCcw, Crown, UserCheck } from 'lucide-react';
 import type { Member } from '../types';
 
 interface MemberManagerProps {
@@ -12,6 +12,11 @@ interface MemberManagerProps {
   onResetAllData: () => void;
   onLoadDemoData: () => void;
   isRoomAdmin?: boolean;
+  myMemberId?: string | null;
+  onSetMyMemberId?: (id: string, name: string) => void;
+  onTransferAdmin?: (newAdminMemberId: string, newAdminMemberName: string) => void;
+  adminMemberId?: string;
+  adminMemberName?: string;
 }
 
 const AVATAR_COLORS = [
@@ -33,6 +38,10 @@ export const MemberManager: React.FC<MemberManagerProps> = ({
   onResetAllData,
   onLoadDemoData,
   isRoomAdmin = true,
+  myMemberId,
+  onSetMyMemberId,
+  onTransferAdmin,
+  adminMemberId,
 }) => {
   const [name, setName] = useState('');
   const [upiId, setUpiId] = useState('');
@@ -176,11 +185,18 @@ export const MemberManager: React.FC<MemberManagerProps> = ({
                   const balance = netBalances[member.id] || 0;
                   const isCreditor = balance > 0.01;
                   const isDebtor = balance < -0.01;
+                  const isThisMemberAdmin =
+                    member.id === adminMemberId || (isRoomAdmin && !adminMemberId && members.length > 0 && member.id === members[0].id);
+                  const isMe = member.id === myMemberId;
 
                   return (
                     <div
                       key={member.id}
-                      className="p-3 rounded-xl bg-zinc-900/40 border border-white/5 flex items-center justify-between gap-3"
+                      className={`p-3 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all ${
+                        isMe
+                          ? 'bg-emerald-950/20 border-emerald-800/40'
+                          : 'bg-zinc-900/40 border-white/5'
+                      }`}
                     >
                       <div className="flex items-center gap-3">
                         <div
@@ -190,14 +206,40 @@ export const MemberManager: React.FC<MemberManagerProps> = ({
                           {member.name.charAt(0).toUpperCase()}
                         </div>
                         <div>
-                          <div className="text-xs font-bold text-white flex items-center gap-1.5">
+                          <div className="text-xs font-bold text-white flex items-center gap-1.5 flex-wrap">
                             <span>{member.name}</span>
+
+                            {isThisMemberAdmin && (
+                              <span className="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-1.5 py-0.2 rounded-full font-semibold flex items-center gap-0.5">
+                                <Crown className="w-2.5 h-2.5 text-amber-400" />
+                                <span>Admin</span>
+                              </span>
+                            )}
+
+                            {isMe ? (
+                              <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-1.5 py-0.2 rounded-full font-semibold flex items-center gap-0.5">
+                                <UserCheck className="w-2.5 h-2.5 text-emerald-400" />
+                                <span>You</span>
+                              </span>
+                            ) : (
+                              onSetMyMemberId && (
+                                <button
+                                  type="button"
+                                  onClick={() => onSetMyMemberId(member.id, member.name)}
+                                  className="text-[9px] bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700 px-1.5 py-0.5 rounded cursor-pointer transition-all"
+                                  title="Mark yourself as this flatmate on this phone/browser"
+                                >
+                                  This is Me
+                                </button>
+                              )
+                            )}
+
                             <span className="text-[10px] font-mono text-zinc-400 bg-zinc-800 px-1.5 py-0.5 rounded">
                               {member.upiId}
                             </span>
                           </div>
                           {member.phone && (
-                            <div className="text-[10px] text-zinc-500 flex items-center gap-1">
+                            <div className="text-[10px] text-zinc-500 flex items-center gap-1 mt-0.5">
                               <Phone className="w-2.5 h-2.5 text-emerald-500" />
                               <span>+91 {member.phone}</span>
                             </div>
@@ -205,8 +247,8 @@ export const MemberManager: React.FC<MemberManagerProps> = ({
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-3">
-                        <div className="text-right">
+                      <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-white/5">
+                        <div className="text-left sm:text-right">
                           <div
                             className={`text-xs font-mono font-bold ${
                               isCreditor
@@ -223,24 +265,47 @@ export const MemberManager: React.FC<MemberManagerProps> = ({
                           </div>
                         </div>
 
-                        {/* Can delete individual flatmates - Room Admin Only */}
-                        {isRoomAdmin && (
-                          <button
-                            onClick={() => {
-                              if (
-                                window.confirm(
-                                  `Remove flatmate "${member.name}"?\n\n⚠️ Note: This removes ${member.name} from the flatmate list.\n\n💡 Tip: If you only want to delete a single expense/bill, cancel this and click the trash can icon on that expense in the Expense Feed instead.`
-                                )
-                              ) {
-                                onDeleteMember(member.id);
-                              }
-                            }}
-                            className="p-1.5 rounded-lg text-zinc-500 hover:text-rose-400 hover:bg-rose-950/40 transition-all cursor-pointer"
-                            title="Remove Flatmate (Room Admin only)"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        )}
+                        <div className="flex items-center gap-1">
+                          {/* Option to transfer Room Admin powers to this member */}
+                          {isRoomAdmin && !isThisMemberAdmin && onTransferAdmin && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (
+                                  window.confirm(
+                                    `👑 Transfer Room Admin powers to ${member.name}?\n\n${member.name} will become the new Room Admin with exclusive delete and management rights. You will become a regular member.`
+                                  )
+                                ) {
+                                  onTransferAdmin(member.id, member.name);
+                                }
+                              }}
+                              className="px-2 py-1 rounded-lg bg-amber-950/60 hover:bg-amber-900 border border-amber-700/60 text-amber-300 text-[10px] font-bold flex items-center gap-1 transition-all cursor-pointer"
+                              title="Transfer Admin rights to this flatmate"
+                            >
+                              <Crown className="w-3 h-3 text-amber-400" />
+                              <span className="hidden sm:inline">Make Admin</span>
+                            </button>
+                          )}
+
+                          {/* Can delete individual flatmates - Room Admin Only */}
+                          {isRoomAdmin && (
+                            <button
+                              onClick={() => {
+                                if (
+                                  window.confirm(
+                                    `Remove flatmate "${member.name}"?\n\n⚠️ Note: This removes ${member.name} from the flatmate list.\n\n💡 Tip: If you only want to delete a single expense/bill, cancel this and click the trash can icon on that expense in the Expense Feed instead.`
+                                  )
+                                ) {
+                                  onDeleteMember(member.id);
+                                }
+                              }}
+                              className="p-1.5 rounded-lg text-zinc-500 hover:text-rose-400 hover:bg-rose-950/40 transition-all cursor-pointer"
+                              title="Remove Flatmate (Room Admin only)"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   );

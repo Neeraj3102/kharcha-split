@@ -106,10 +106,121 @@ export function getActiveRoomId(): { roomId: string; roomName: string } | null {
   return null;
 }
 
+export interface SavedRoom {
+  roomId: string;
+  roomName: string;
+  joinedAt: string;
+  lastVisitedAt: string;
+  myMemberId?: string;
+  myMemberName?: string;
+  isAdmin?: boolean;
+}
+
+const SAVED_ROOMS_KEY = 'kharchasplit_saved_rooms';
+const MY_MEMBER_PREFIX = 'kharchasplit_my_member_';
+
+/**
+ * Returns list of rooms this device has joined or created
+ */
+export function getSavedRooms(): SavedRoom[] {
+  try {
+    const raw = localStorage.getItem(SAVED_ROOMS_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Saves or updates a room in the device's saved rooms list
+ */
+export function addSavedRoom(
+  roomId: string,
+  roomName: string,
+  myMemberId?: string,
+  myMemberName?: string,
+  isAdmin?: boolean
+): void {
+  try {
+    const cleanId = roomId.trim().toUpperCase();
+    const rooms = getSavedRooms().filter((r) => r.roomId !== cleanId);
+    const existing = getSavedRooms().find((r) => r.roomId === cleanId);
+
+    const now = new Date().toISOString();
+    const newRoom: SavedRoom = {
+      roomId: cleanId,
+      roomName: roomName || existing?.roomName || `Flat ${cleanId}`,
+      joinedAt: existing?.joinedAt || now,
+      lastVisitedAt: now,
+      myMemberId: myMemberId || existing?.myMemberId,
+      myMemberName: myMemberName || existing?.myMemberName,
+      isAdmin: isAdmin !== undefined ? isAdmin : existing?.isAdmin,
+    };
+
+    rooms.unshift(newRoom);
+    localStorage.setItem(SAVED_ROOMS_KEY, JSON.stringify(rooms.slice(0, 20))); // Keep up to 20 saved flats
+  } catch {
+    // ignore
+  }
+}
+
+/**
+ * Removes a room from the saved flats list
+ */
+export function removeSavedRoom(roomId: string): void {
+  try {
+    const cleanId = roomId.trim().toUpperCase();
+    const rooms = getSavedRooms().filter((r) => r.roomId !== cleanId);
+    localStorage.setItem(SAVED_ROOMS_KEY, JSON.stringify(rooms));
+  } catch {
+    // ignore
+  }
+}
+
+/**
+ * Device identity helpers: Track who "I am" in a given room on this device
+ */
+export function getMyMemberId(roomId: string): string | null {
+  try {
+    return localStorage.getItem(`${MY_MEMBER_PREFIX}${roomId.trim().toUpperCase()}`);
+  } catch {
+    return null;
+  }
+}
+
+export function setMyMemberId(roomId: string, memberId: string, memberName?: string): void {
+  try {
+    const cleanId = roomId.trim().toUpperCase();
+    localStorage.setItem(`${MY_MEMBER_PREFIX}${cleanId}`, memberId);
+    // Update in saved rooms as well
+    const rooms = getSavedRooms();
+    const target = rooms.find((r) => r.roomId === cleanId);
+    if (target) {
+      target.myMemberId = memberId;
+      if (memberName) target.myMemberName = memberName;
+      localStorage.setItem(SAVED_ROOMS_KEY, JSON.stringify(rooms));
+    }
+  } catch {
+    // ignore
+  }
+}
+
+export function clearMyMemberId(roomId: string): void {
+  try {
+    localStorage.removeItem(`${MY_MEMBER_PREFIX}${roomId.trim().toUpperCase()}`);
+  } catch {
+    // ignore
+  }
+}
+
 export function saveActiveRoomId(roomId: string, roomName: string): void {
   try {
-    localStorage.setItem(ACTIVE_ROOM_KEY, JSON.stringify({ roomId, roomName }));
-    window.location.hash = `room=${roomId}`;
+    const cleanId = roomId.trim().toUpperCase();
+    localStorage.setItem(ACTIVE_ROOM_KEY, JSON.stringify({ roomId: cleanId, roomName }));
+    window.location.hash = `room=${cleanId}`;
+    addSavedRoom(cleanId, roomName);
   } catch {
     // ignore
   }
@@ -132,13 +243,22 @@ export interface RoomMeta {
   id: string;
   name: string;
   adminKey?: string;
+  adminMemberId?: string;
+  adminMemberName?: string;
   createdAt?: string;
   updatedAt?: string;
 }
 
 export function saveRoomAdminKey(roomId: string, adminKey: string): void {
   try {
-    localStorage.setItem(`${ROOM_ADMIN_PREFIX}${roomId}`, adminKey);
+    localStorage.setItem(`${ROOM_ADMIN_PREFIX}${roomId.trim().toUpperCase()}`, adminKey);
+    // Also mark as admin in saved rooms
+    const rooms = getSavedRooms();
+    const r = rooms.find((x) => x.roomId === roomId.trim().toUpperCase());
+    if (r) {
+      r.isAdmin = true;
+      localStorage.setItem(SAVED_ROOMS_KEY, JSON.stringify(rooms));
+    }
   } catch {
     // ignore
   }
@@ -146,7 +266,7 @@ export function saveRoomAdminKey(roomId: string, adminKey: string): void {
 
 export function getRoomAdminKey(roomId: string): string | null {
   try {
-    return localStorage.getItem(`${ROOM_ADMIN_PREFIX}${roomId}`);
+    return localStorage.getItem(`${ROOM_ADMIN_PREFIX}${roomId.trim().toUpperCase()}`);
   } catch {
     return null;
   }
@@ -154,7 +274,14 @@ export function getRoomAdminKey(roomId: string): string | null {
 
 export function clearRoomAdminKey(roomId: string): void {
   try {
-    localStorage.removeItem(`${ROOM_ADMIN_PREFIX}${roomId}`);
+    const cleanId = roomId.trim().toUpperCase();
+    localStorage.removeItem(`${ROOM_ADMIN_PREFIX}${cleanId}`);
+    const rooms = getSavedRooms();
+    const r = rooms.find((x) => x.roomId === cleanId);
+    if (r) {
+      r.isAdmin = false;
+      localStorage.setItem(SAVED_ROOMS_KEY, JSON.stringify(rooms));
+    }
   } catch {
     // ignore
   }
@@ -163,13 +290,60 @@ export function clearRoomAdminKey(roomId: string): void {
 /**
  * Checks if current user is the admin of the room
  */
-export function isUserRoomAdmin(roomId: string, roomMeta?: RoomMeta | null): boolean {
+export function isUserRoomAdmin(
+  roomId: string,
+  roomMeta?: RoomMeta | null,
+  currentMemberId?: string | null
+): boolean {
   if (!roomId) return true; // Offline local mode has full admin permissions
-  const savedKey = getRoomAdminKey(roomId);
+  const cleanId = roomId.trim().toUpperCase();
+
+  // 1. If roomMeta specifies an adminMemberId, check if current user matches
+  if (roomMeta?.adminMemberId) {
+    const myId = currentMemberId || getMyMemberId(cleanId);
+    if (myId && myId === roomMeta.adminMemberId) {
+      return true;
+    }
+  }
+
+  // 2. Check stored admin key on device
+  const savedKey = getRoomAdminKey(cleanId);
   if (!savedKey) return false;
   if (roomMeta?.adminKey) {
     return savedKey === roomMeta.adminKey;
   }
+  return true;
+}
+
+/**
+ * Transfer admin authority to another flatmate in the room
+ */
+export async function transferRoomAdmin(
+  roomId: string,
+  newAdminMemberId: string,
+  newAdminMemberName: string
+): Promise<boolean> {
+  const cleanId = roomId.trim().toUpperCase();
+  const db = getFirebaseDb();
+  const newAdminKey = `adm_${Math.random().toString(36).slice(2, 9)}_${Date.now().toString(36)}`;
+
+  if (db) {
+    try {
+      const metaRef = ref(db, `kharcha_rooms/${cleanId}/meta`);
+      await update(metaRef, {
+        adminMemberId: newAdminMemberId,
+        adminMemberName: newAdminMemberName,
+        adminKey: newAdminKey,
+        updatedAt: new Date().toISOString(),
+      });
+    } catch (e) {
+      console.error('Failed to transfer room admin via Firebase:', e);
+      return false;
+    }
+  }
+
+  // Clear current device's admin key so authority is relinquished
+  clearRoomAdminKey(cleanId);
   return true;
 }
 
@@ -325,6 +499,8 @@ export async function pushRoomState(
       name: roomName || existingMeta.name || `Flat ${roomId}`,
       updatedAt: new Date().toISOString(),
       ...(finalAdminKey ? { adminKey: finalAdminKey } : {}),
+      ...(existingMeta.adminMemberId ? { adminMemberId: existingMeta.adminMemberId } : {}),
+      ...(existingMeta.adminMemberName ? { adminMemberName: existingMeta.adminMemberName } : {}),
     });
 
     const stateRef = ref(db, `kharcha_rooms/${roomId}/state`);
@@ -332,6 +508,36 @@ export async function pushRoomState(
     return true;
   } catch (err) {
     console.error('Failed to sync room state to Firebase:', err);
+    return false;
+  }
+}
+
+/**
+ * Room Admin / Super Admin: Delete a specific settled transaction from any room
+ */
+export async function deleteSettledTransactionFromRoom(
+  roomId: string,
+  settledId: string
+): Promise<boolean> {
+  const db = getFirebaseDb();
+  if (!db) return false;
+
+  try {
+    const cleanId = roomId.trim().toUpperCase();
+    const snapshot = await get(ref(db, `kharcha_rooms/${cleanId}/state/settledTransactions`));
+    if (snapshot.exists()) {
+      const raw = snapshot.val();
+      const list = safeArray<any>(raw);
+      const filtered = list.filter((s: any) => s && s.id !== settledId);
+      await set(ref(db, `kharcha_rooms/${cleanId}/state/settledTransactions`), filtered);
+      await update(ref(db, `kharcha_rooms/${cleanId}/meta`), {
+        updatedAt: new Date().toISOString(),
+      });
+      return true;
+    }
+    return false;
+  } catch (err) {
+    console.error(`Failed to delete settled transaction ${settledId} from room ${roomId}:`, err);
     return false;
   }
 }

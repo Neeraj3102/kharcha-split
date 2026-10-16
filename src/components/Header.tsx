@@ -118,7 +118,7 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </button>
 
-          {/* MULTIPLAYER FLAT ROOM BUTTON */}
+          {/* MULTIPLAYER FLAT ROOM SWITCHER BUTTON */}
           <button
             onClick={onOpenRoomManager}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold border transition-all cursor-pointer shrink-0 ${
@@ -126,10 +126,10 @@ export const Header: React.FC<HeaderProps> = ({
                 ? 'bg-emerald-950/60 border-emerald-700/80 text-emerald-300 hover:bg-emerald-900/50'
                 : 'bg-zinc-900/80 hover:bg-zinc-800 text-zinc-200 border-zinc-700/60'
             }`}
-            title="Manage shared flat room and invite links"
+            title="Switch flats or manage shared rooms"
           >
             <Users className="w-3.5 h-3.5 text-emerald-400" />
-            <span>{activeRoom ? `Flat #${activeRoom.roomId}` : 'Flat Rooms'}</span>
+            <span>{activeRoom ? `Flat #${activeRoom.roomId} ⇄` : 'My Flats ⇄'}</span>
           </button>
 
           {/* FLATMATE MANAGER */}

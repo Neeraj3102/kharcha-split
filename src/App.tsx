@@ -27,7 +27,11 @@ import {
   subscribeToRoomState,
   subscribeToAllRooms,
   pushRoomState,
-  getRoomAdminKey,
+  getMyMemberId,
+  setMyMemberId,
+  isUserRoomAdmin,
+  transferRoomAdmin,
+  deleteSettledTransactionFromRoom,
 } from './utils/firebase';
 import type { RoomMeta } from './utils/firebase';
 
@@ -113,16 +117,33 @@ export function App() {
   const [roomMeta, setRoomMeta] = useState<RoomMeta | null>(null);
   const [adminRefreshTick, setAdminRefreshTick] = useState(0);
 
+  // Device Identity in the active room (e.g., who "I am" on this device)
+  const [myMemberId, setMyMemberIdState] = useState<string | null>(() => {
+    const current = getActiveRoomId();
+    return current ? getMyMemberId(current.roomId) : null;
+  });
+
+  // Keep myMemberId synchronized when active room changes
+  useEffect(() => {
+    if (activeRoom) {
+      setMyMemberIdState(getMyMemberId(activeRoom.roomId));
+    } else {
+      setMyMemberIdState(null);
+    }
+  }, [activeRoom?.roomId]);
+
+  const handleSetMyMemberId = (memberId: string, memberName: string) => {
+    if (!activeRoom) return;
+    setMyMemberId(activeRoom.roomId, memberId, memberName);
+    setMyMemberIdState(memberId);
+    setAdminRefreshTick((t) => t + 1);
+  };
+
   // Authority check: Is current user the Room Admin? (Local mode has full admin rights)
   const isRoomAdmin = useMemo(() => {
     if (!activeRoom) return true;
-    const localKey = getRoomAdminKey(activeRoom.roomId);
-    if (!localKey) return false;
-    if (roomMeta?.adminKey) {
-      return localKey === roomMeta.adminKey;
-    }
-    return true;
-  }, [activeRoom, roomMeta, adminRefreshTick]);
+    return isUserRoomAdmin(activeRoom.roomId, roomMeta, myMemberId);
+  }, [activeRoom, roomMeta, myMemberId, adminRefreshTick]);
 
   // Active room ref to prevent stale closures during rapid updates
   const activeRoomRef = useRef(activeRoom);
@@ -406,17 +427,98 @@ export function App() {
     setMarkPaidSettlement(settlement);
   };
 
-  // Confirm Settlement
+  // Confirm Settlement (With over-settlement prevention & duplicate suppression to eliminate ghost payment reminders)
   const handleConfirmSettlement = (settlement: Settlement) => {
+    // 1. Calculate live net balances before this settlement
+    const currentBalances = getMemberNetBalances(
+      state.members,
+      state.expenses,
+      state.settledTransactions
+    );
+
+    const debtorDebt = Math.max(0, -(currentBalances[settlement.fromMemberId] || 0));
+    const creditorCredit = Math.max(0, currentBalances[settlement.toMemberId] || 0);
+
+    if (debtorDebt < 0.01 || creditorCredit < 0.01) {
+      alert('Notice: This payment is already fully balanced! No remaining debt exists between these flatmates.');
+      return;
+    }
+
+    // 2. Prevent over-settlement: Cap amount to the exact remaining debt
+    const cappedAmount = Math.min(settlement.amount, debtorDebt, creditorCredit);
+    const roundedAmount = Math.round(cappedAmount * 100) / 100;
+
+    if (roundedAmount < 0.01) {
+      return;
+    }
+
+    // 3. Deduplication check: ignore if the exact same payment was recorded in the last 15 seconds
+    const now = Date.now();
+    const isDuplicate = state.settledTransactions.some((s) => {
+      if (s.fromMemberId === settlement.fromMemberId && s.toMemberId === settlement.toMemberId) {
+        if (Math.abs(s.amount - roundedAmount) < 0.01) {
+          const settledTime = s.settledAt ? new Date(s.settledAt).getTime() : 0;
+          return now - settledTime < 15000;
+        }
+      }
+      return false;
+    });
+
+    if (isDuplicate) {
+      console.log('Prevented duplicate settlement submission within 15 seconds.');
+      return;
+    }
+
+    const newSettledRecord: Settlement = {
+      ...settlement,
+      id: `settle-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      amount: roundedAmount,
+      isSettled: true,
+      settledAt: new Date().toISOString(),
+    };
+
     const updated = {
       ...state,
-      settledTransactions: [
-        ...state.settledTransactions,
-        { ...settlement, isSettled: true, settledAt: new Date().toISOString() },
-      ],
+      settledTransactions: [...state.settledTransactions, newSettledRecord],
     };
     setState(updated);
     syncToCloud(updated);
+  };
+
+  // Delete / Undo a settled payment (Room Admin only)
+  const handleDeleteSettledTransaction = async (transactionId: string) => {
+    if (activeRoom && !isRoomAdmin) {
+      alert('Authority restricted: Only the Room Admin can undo settled records.');
+      return;
+    }
+    const updated = {
+      ...state,
+      settledTransactions: state.settledTransactions.filter((s) => s.id !== transactionId),
+    };
+    setState(updated);
+    syncToCloud(updated);
+
+    if (activeRoom) {
+      await deleteSettledTransactionFromRoom(activeRoom.roomId, transactionId);
+    }
+  };
+
+  // Transfer Room Admin powers to another flatmate
+  const handleTransferAdmin = async (newMemberId: string, newMemberName: string) => {
+    if (!activeRoom) return;
+    const ok = await transferRoomAdmin(activeRoom.roomId, newMemberId, newMemberName);
+    if (ok) {
+      setRoomMeta((prev) =>
+        prev
+          ? {
+              ...prev,
+              adminMemberId: newMemberId,
+              adminMemberName: newMemberName,
+            }
+          : null
+      );
+      setAdminRefreshTick((t) => t + 1);
+    }
   };
 
   const toggleTheme = () => {
@@ -605,8 +707,13 @@ export function App() {
               <SettlementCards
                 settlements={settlements}
                 members={state.members}
+                settledTransactions={state.settledTransactions}
+                myMemberId={myMemberId}
+                isRoomAdmin={isRoomAdmin}
                 onOpenQr={handleOpenQr}
                 onOpenMarkPaid={handleOpenMarkPaid}
+                onDeleteSettledTransaction={handleDeleteSettledTransaction}
+                onSetMyMemberId={handleSetMyMemberId}
               />
             </section>
 
@@ -742,6 +849,11 @@ export function App() {
         onResetAllData={handleResetAllData}
         onLoadDemoData={handleLoadDemoData}
         isRoomAdmin={isRoomAdmin}
+        myMemberId={myMemberId}
+        onSetMyMemberId={handleSetMyMemberId}
+        onTransferAdmin={handleTransferAdmin}
+        adminMemberId={roomMeta?.adminMemberId}
+        adminMemberName={roomMeta?.adminMemberName}
       />
 
       <QRCodeModal
@@ -788,7 +900,9 @@ export function App() {
         theme={theme}
         isRoomAdmin={isRoomAdmin}
         roomMeta={roomMeta}
+        myMemberId={myMemberId}
         onAdminClaimed={() => setAdminRefreshTick((t) => t + 1)}
+        onTransferAdmin={handleTransferAdmin}
       />
 
       <AdminPortalModal
