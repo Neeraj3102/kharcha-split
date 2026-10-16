@@ -58,6 +58,7 @@ import { AdminPortalModal } from './components/AdminPortalModal';
 import { TagSpendingChart } from './components/TagSpendingChart';
 import { JoinRequestModal } from './components/JoinRequestModal';
 import { UserProfileModal } from './components/UserProfileModal';
+import { TutorialModal } from './components/TutorialModal';
 import { getUserProfile, saveUserProfile } from './utils/userProfile';
 
 export function App() {
@@ -90,6 +91,31 @@ export function App() {
   const [isRoomManagerOpen, setIsRoomManagerOpen] = useState(false);
   const [isAdminPortalOpen, setIsAdminPortalOpen] = useState(false);
   const [selectedTagFilter, setSelectedTagFilter] = useState<string | null>(null);
+
+  // New-User Onboarding Tutorial Modal State (Only auto-shows to fresh first-time users)
+  const [isTutorialOpen, setIsTutorialOpen] = useState<boolean>(() => {
+    try {
+      const hasSeen = localStorage.getItem('kharchasplit_tutorial_seen');
+      if (hasSeen === 'true') return false;
+
+      // Also check if user has existing members or expenses from prior sessions
+      const hasData = localStorage.getItem('kharchasplit_v2_data');
+      if (hasData) {
+        try {
+          const parsed = JSON.parse(hasData);
+          if (parsed && (parsed.members?.length > 0 || parsed.expenses?.length > 0)) {
+            localStorage.setItem('kharchasplit_tutorial_seen', 'true');
+            return false;
+          }
+        } catch {
+          // ignore
+        }
+      }
+      return true; // Brand-new user!
+    } catch {
+      return false;
+    }
+  });
 
   // User Profile state
   const [userProfile, setUserProfile] = useState<UserProfile | null>(getUserProfile);
@@ -365,6 +391,7 @@ export function App() {
     isAddExpenseOpen ||
     isAddMemberOpen ||
     isProfileOpen ||
+    isTutorialOpen ||
     isReportOpen ||
     isShareLedgerOpen ||
     isRoomManagerOpen ||
@@ -1097,6 +1124,14 @@ export function App() {
         isRoomAdmin={isRoomAdmin}
         netBalances={netBalances}
         expenses={state.expenses}
+        theme={theme}
+        onOpenTutorial={() => setIsTutorialOpen(true)}
+      />
+
+      {/* New User Onboarding Tutorial Modal */}
+      <TutorialModal
+        isOpen={isTutorialOpen}
+        onClose={() => setIsTutorialOpen(false)}
         theme={theme}
       />
 

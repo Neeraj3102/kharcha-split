@@ -13,6 +13,7 @@ import {
   CreditCard,
   RefreshCw,
   Wallet,
+  HelpCircle,
 } from 'lucide-react';
 import type { UserProfile, Member, Expense, AppTheme } from '../types';
 import { AVATAR_PALETTE } from '../utils/userProfile';
@@ -31,6 +32,7 @@ interface UserProfileModalProps {
   netBalances: Record<string, number>;
   expenses: Expense[];
   theme: AppTheme;
+  onOpenTutorial?: () => void;
 }
 
 export const UserProfileModal: React.FC<UserProfileModalProps> = ({
@@ -46,6 +48,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
   netBalances,
   expenses,
   theme,
+  onOpenTutorial,
 }) => {
   const isBumblebee = theme === 'bumblebee';
 
@@ -615,10 +618,28 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
 
         {/* Modal Footer */}
         <div className="px-6 py-3 border-t border-white/10 bg-zinc-950/60 flex items-center justify-between text-xs text-zinc-400">
-          <div className="flex items-center gap-1.5">
-            <ShieldCheck className="w-4 h-4 text-emerald-400" />
-            <span>Profile stored locally on this phone</span>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5">
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              <span className="hidden sm:inline">Stored locally on device</span>
+            </div>
+
+            {onOpenTutorial && (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onOpenTutorial();
+                }}
+                className="text-[11px] text-amber-400 hover:underline flex items-center gap-1 cursor-pointer transition-colors"
+                title="Open KharchaSplit Guide & Tutorial"
+              >
+                <HelpCircle className="w-3.5 h-3.5" />
+                <span>How It Works</span>
+              </button>
+            )}
           </div>
+
           <button
             onClick={onClose}
             className="px-4 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-white font-medium text-xs transition-all cursor-pointer"
