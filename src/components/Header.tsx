@@ -40,168 +40,180 @@ export const Header: React.FC<HeaderProps> = ({
   const isPurple = theme === 'purple';
 
   return (
-    <header className="relative w-full pt-5 pb-7 border-b border-white/10">
-      {/* Top Bar with Brand & Actions */}
-      <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        {/* Brand with Compact Responsive Logo */}
-        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-          <div
-            className={`relative flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 rounded-xl p-[1px] shrink-0 ${
-              isPurple
-                ? 'bg-gradient-to-br from-purple-400 via-purple-600 to-indigo-600 shadow-lg shadow-purple-950/60'
-                : 'bg-gradient-to-br from-rose-600 via-rose-700 to-amber-600 neon-glow-red'
-            }`}
-          >
-            <div className="w-full h-full bg-[#0d0d12] rounded-xl flex items-center justify-center">
-              <span
-                className={`font-heading text-lg sm:text-xl font-black tracking-tighter ${
-                  isPurple ? 'text-purple-400' : 'text-rose-500'
-                }`}
-              >
-                {isPurple ? '⚡' : '₹'}
+    <header className="relative w-full pt-4 pb-6 border-b border-white/10">
+      <div className="max-w-6xl mx-auto px-4 space-y-3">
+        {/* Tier 1: Brand & Context Controls (Room, Profile, Theme) */}
+        <div className="flex items-center justify-between gap-3 pb-3 border-b border-white/5">
+          {/* Brand with Responsive Logo */}
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 shrink-0">
+            <div
+              className={`relative flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 rounded-xl p-[1px] shrink-0 ${
+                isPurple
+                  ? 'bg-gradient-to-br from-purple-400 via-purple-600 to-indigo-600 shadow-lg shadow-purple-950/60'
+                  : 'bg-gradient-to-br from-rose-600 via-rose-700 to-amber-600 neon-glow-red'
+              }`}
+            >
+              <div className="w-full h-full bg-[#0d0d12] rounded-xl flex items-center justify-center">
+                <span
+                  className={`font-heading text-lg sm:text-xl font-black tracking-tighter ${
+                    isPurple ? 'text-purple-400' : 'text-rose-500'
+                  }`}
+                >
+                  {isPurple ? '⚡' : '₹'}
+                </span>
+              </div>
+              {/* Pulsing micro dot */}
+              <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5 sm:h-3 sm:w-3">
+                <span
+                  className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                    isPurple ? 'bg-purple-400' : 'bg-rose-500'
+                  }`}
+                ></span>
+                <span
+                  className={`relative inline-flex rounded-full h-2.5 w-2.5 sm:h-3 sm:w-3 ${
+                    isPurple ? 'bg-purple-500' : 'bg-rose-600'
+                  }`}
+                ></span>
               </span>
             </div>
-            {/* Pulsing micro dot */}
-            <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5 sm:h-3 sm:w-3">
-              <span
-                className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
-                  isPurple ? 'bg-purple-400' : 'bg-rose-500'
-                }`}
-              ></span>
-              <span
-                className={`relative inline-flex rounded-full h-2.5 w-2.5 sm:h-3 sm:w-3 ${
-                  isPurple ? 'bg-purple-500' : 'bg-rose-600'
-                }`}
-              ></span>
-            </span>
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-2xl font-extrabold tracking-tight text-white flex items-center gap-1.5 shrink-0 leading-none">
+                <span>KHARCHA</span>
+                <span className={isPurple ? 'text-purple-400' : 'text-rose-500'}>
+                  SPLIT
+                </span>
+              </h1>
+              <p className="text-[10px] sm:text-xs text-zinc-400 font-medium truncate mt-1">
+                Flatmate Ledger • Instant UPI Settle
+              </p>
+            </div>
           </div>
-          <div className="min-w-0">
-            <h1 className="text-lg sm:text-2xl font-extrabold tracking-tight text-white flex items-center gap-1.5 shrink-0 leading-none">
-              <span>KHARCHA</span>
-              <span className={isPurple ? 'text-purple-400' : 'text-rose-500'}>
-                SPLIT
-              </span>
-            </h1>
-            <p className="text-[10px] sm:text-xs text-zinc-400 font-medium truncate mt-1">
-              Flatmate Ledger • Instant UPI Settle
-            </p>
+
+          {/* Right: Room Switcher, User Profile & Theme Toggle */}
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            {/* MULTIPLAYER FLAT ROOM SWITCHER BUTTON */}
+            <button
+              onClick={onOpenRoomManager}
+              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs font-semibold border transition-all cursor-pointer relative shrink-0 ${
+                pendingRequestsCount > 0
+                  ? 'bg-amber-950/80 border-amber-500/80 text-amber-300 hover:bg-amber-900/60 shadow-lg shadow-amber-950/40'
+                  : activeRoom
+                  ? 'bg-emerald-950/60 border-emerald-700/80 text-emerald-300 hover:bg-emerald-900/50'
+                  : 'bg-zinc-900/80 hover:bg-zinc-800 text-zinc-200 border-zinc-700/60'
+              }`}
+              title="Switch flats or manage shared rooms"
+            >
+              <Users className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="hidden sm:inline">{activeRoom ? `Flat #${activeRoom.roomId} ⇄` : 'My Flats ⇄'}</span>
+              <span className="sm:hidden text-[11px] font-bold">{activeRoom ? `#${activeRoom.roomId}` : 'Flats'}</span>
+              {pendingRequestsCount > 0 && (
+                <span className="px-1.5 py-0.2 rounded-full bg-amber-500 text-zinc-950 text-[10px] font-extrabold animate-bounce">
+                  +{pendingRequestsCount}
+                </span>
+              )}
+            </button>
+
+            {/* USER PROFILE BUTTON */}
+            <button
+              onClick={onOpenProfile}
+              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs font-semibold border transition-all cursor-pointer shrink-0 ${
+                userProfile?.name
+                  ? 'bg-zinc-900/90 hover:bg-zinc-800 text-white border-zinc-700/80 shadow-sm'
+                  : 'bg-zinc-900/60 hover:bg-zinc-800 text-zinc-300 border-zinc-700/50'
+              }`}
+              title="Manage your user profile and receiving UPI QR"
+            >
+              {userProfile?.name ? (
+                <>
+                  <div
+                    className="w-4 h-4 rounded-full flex items-center justify-center font-bold text-white text-[10px] shrink-0"
+                    style={{ backgroundColor: userProfile.avatarColor || '#ff003b' }}
+                  >
+                    {userProfile.name.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="hidden sm:inline max-w-[85px] truncate">{userProfile.name}</span>
+                </>
+              ) : (
+                <>
+                  <User className="w-3.5 h-3.5 text-zinc-400" />
+                  <span className="hidden sm:inline">Profile</span>
+                </>
+              )}
+            </button>
+
+            {/* THEME TOGGLE SWITCHER */}
+            <button
+              onClick={onToggleTheme}
+              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs font-bold border transition-all cursor-pointer shrink-0 ${
+                isPurple
+                  ? 'bg-purple-950/50 text-purple-300 border-purple-700/80 hover:bg-purple-900/50 hover:border-purple-500 shadow-sm'
+                  : 'bg-rose-950/40 text-rose-300 border-rose-800/80 hover:bg-rose-900/40'
+              }`}
+              title="Toggle between Crimson Dark and Purple themes"
+            >
+              {isPurple ? (
+                <>
+                  <Sparkles className="w-3.5 h-3.5 text-purple-400 fill-purple-400" />
+                  <span className="hidden sm:inline">Purple</span>
+                </>
+              ) : (
+                <>
+                  <Flame className="w-3.5 h-3.5 text-rose-500 fill-rose-500" />
+                  <span className="hidden sm:inline">Crimson</span>
+                </>
+              )}
+            </button>
           </div>
         </div>
 
-        {/* Global Action Buttons - Horizontal Swipe on Mobile, Wrap on Desktop */}
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap">
-          {/* THEME TOGGLE SWITCHER */}
-          <button
-            onClick={onToggleTheme}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold border transition-all cursor-pointer shrink-0 ${
-              isPurple
-                ? 'bg-purple-950/50 text-purple-300 border-purple-700/80 hover:bg-purple-900/50 hover:border-purple-500 shadow-sm'
-                : 'bg-rose-950/40 text-rose-300 border-rose-800/80 hover:bg-rose-900/40'
-            }`}
-            title="Toggle between Crimson Dark and Purple themes"
-          >
-            {isPurple ? (
-              <>
-                <Sparkles className="w-3.5 h-3.5 text-purple-400 fill-purple-400" />
-                <span>Purple</span>
-              </>
-            ) : (
-              <>
-                <Flame className="w-3.5 h-3.5 text-rose-500 fill-rose-500" />
-                <span>Crimson</span>
-              </>
-            )}
-          </button>
+        {/* Tier 2: Action Ribbon (Add Expense, Flatmates, PDF, WhatsApp Report) */}
+        <div className="flex items-center justify-between gap-2 overflow-x-auto no-scrollbar py-0.5">
+          {/* Primary Operations */}
+          <div className="flex items-center gap-2 shrink-0">
+            {/* ADD EXPENSE BUTTON */}
+            <button
+              onClick={onOpenAddExpense}
+              className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-lg shrink-0 ${
+                isPurple
+                  ? 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-purple-950/60'
+                  : 'bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white shadow-rose-950/50 hover:shadow-rose-600/30'
+              }`}
+            >
+              <PlusCircle className="w-4 h-4" />
+              <span>+ Add Expense</span>
+            </button>
 
-          {/* USER PROFILE BUTTON */}
-          <button
-            onClick={onOpenProfile}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold border transition-all cursor-pointer shrink-0 ${
-              userProfile?.name
-                ? 'bg-zinc-900/90 hover:bg-zinc-800 text-white border-zinc-700/80 shadow-sm'
-                : 'bg-zinc-900/60 hover:bg-zinc-800 text-zinc-300 border-zinc-700/50'
-            }`}
-            title="Manage your user profile and receiving UPI QR"
-          >
-            {userProfile?.name ? (
-              <>
-                <div
-                  className="w-4 h-4 rounded-full flex items-center justify-center font-bold text-white text-[10px] shrink-0"
-                  style={{ backgroundColor: userProfile.avatarColor || '#ff003b' }}
-                >
-                  {userProfile.name.charAt(0).toUpperCase()}
-                </div>
-                <span className="max-w-[90px] truncate">{userProfile.name}</span>
-              </>
-            ) : (
-              <>
-                <User className="w-3.5 h-3.5 text-zinc-400" />
-                <span>Profile</span>
-              </>
-            )}
-          </button>
+            {/* FLATMATE MANAGER */}
+            <button
+              onClick={onOpenAddMember}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-zinc-900/80 hover:bg-zinc-800 text-zinc-200 border border-zinc-700/60 transition-all cursor-pointer shrink-0"
+            >
+              <UserPlus className="w-4 h-4 text-zinc-300" />
+              <span>Flatmates ({activeMemberCount})</span>
+            </button>
+          </div>
 
-          {/* MULTIPLAYER FLAT ROOM SWITCHER BUTTON */}
-          <button
-            onClick={onOpenRoomManager}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold border transition-all cursor-pointer shrink-0 relative ${
-              pendingRequestsCount > 0
-                ? 'bg-amber-950/80 border-amber-500/80 text-amber-300 hover:bg-amber-900/60 shadow-lg shadow-amber-950/40'
-                : activeRoom
-                ? 'bg-emerald-950/60 border-emerald-700/80 text-emerald-300 hover:bg-emerald-900/50'
-                : 'bg-zinc-900/80 hover:bg-zinc-800 text-zinc-200 border-zinc-700/60'
-            }`}
-            title="Switch flats or manage shared rooms"
-          >
-            <Users className="w-3.5 h-3.5 text-emerald-400" />
-            <span>{activeRoom ? `Flat #${activeRoom.roomId} ⇄` : 'My Flats ⇄'}</span>
-            {pendingRequestsCount > 0 && (
-              <span className="px-1.5 py-0.2 rounded-full bg-amber-500 text-zinc-950 text-[10px] font-extrabold animate-bounce">
-                +{pendingRequestsCount}
-              </span>
-            )}
-          </button>
+          {/* Export & Sharing Operations */}
+          <div className="flex items-center gap-2 shrink-0">
+            {/* SHARE LEDGER AS PDF / LINK */}
+            <button
+              onClick={onOpenShareLedger}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-zinc-900/80 hover:bg-zinc-800 text-zinc-200 border border-zinc-700/60 transition-all cursor-pointer shrink-0"
+              title="Export full ledger as PDF or copy shareable link"
+            >
+              <Share2 className={`w-4 h-4 ${isPurple ? 'text-purple-400' : 'text-rose-400'}`} />
+              <span>PDF Export</span>
+            </button>
 
-          {/* FLATMATE MANAGER */}
-          <button
-            onClick={onOpenAddMember}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-zinc-900/80 hover:bg-zinc-800 text-zinc-200 border border-zinc-700/60 transition-all cursor-pointer shrink-0"
-          >
-            <UserPlus className="w-4 h-4 text-zinc-300" />
-            <span>Flatmates ({activeMemberCount})</span>
-          </button>
-
-          {/* ADD EXPENSE BUTTON */}
-          <button
-            onClick={onOpenAddExpense}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-lg shrink-0 ${
-              isPurple
-                ? 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-purple-950/60'
-                : 'bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white shadow-rose-950/50 hover:shadow-rose-600/30'
-            }`}
-          >
-            <PlusCircle className="w-4 h-4" />
-            <span>+ Add Expense</span>
-          </button>
-
-          {/* SHARE LEDGER AS PDF / LINK */}
-          <button
-            onClick={onOpenShareLedger}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-zinc-900/80 hover:bg-zinc-800 text-zinc-200 border border-zinc-700/60 transition-all cursor-pointer shrink-0"
-            title="Export full ledger as PDF or copy shareable link"
-          >
-            <Share2 className={`w-4 h-4 ${isPurple ? 'text-purple-400' : 'text-rose-400'}`} />
-            <span>PDF Export</span>
-          </button>
-
-          {/* WHATSAPP REPORT */}
-          <button
-            onClick={onOpenReport}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-zinc-900/80 hover:bg-zinc-800 text-zinc-200 border border-zinc-700/60 transition-all cursor-pointer shrink-0"
-          >
-            <FileText className="w-4 h-4 text-emerald-400" />
-            <span>WhatsApp Report</span>
-          </button>
+            {/* WHATSAPP REPORT */}
+            <button
+              onClick={onOpenReport}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-zinc-900/80 hover:bg-zinc-800 text-zinc-200 border border-zinc-700/60 transition-all cursor-pointer shrink-0"
+            >
+              <FileText className="w-4 h-4 text-emerald-400" />
+              <span>WhatsApp Report</span>
+            </button>
+          </div>
         </div>
       </div>
 
