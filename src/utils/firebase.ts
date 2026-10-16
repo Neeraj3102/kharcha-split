@@ -380,10 +380,258 @@ export async function claimRoomAdminKey(roomId: string, enteredKeyOrPin: string)
   if (cleanInput === currentPin) {
     const newKey = `adm_${Math.random().toString(36).slice(2, 9)}_${Date.now().toString(36)}`;
     saveRoomAdminKey(roomId, newKey);
+    setDeviceApproved(roomId, getDeviceId(), 'Room Admin');
     return true;
   }
 
   return false;
+}
+
+const DEVICE_ID_KEY = 'kharchasplit_device_id';
+
+export function getDeviceId(): string {
+  try {
+    let id = localStorage.getItem(DEVICE_ID_KEY);
+    if (!id) {
+      id = 'dev_' + Math.random().toString(36).slice(2, 9) + '_' + Date.now().toString(36);
+      localStorage.setItem(DEVICE_ID_KEY, id);
+    }
+    return id;
+  } catch {
+    return 'dev_anon_' + Date.now().toString(36);
+  }
+}
+
+export interface JoinRequest {
+  id: string;
+  roomId: string;
+  deviceId: string;
+  name: string;
+  phone?: string;
+  requestedAt: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  respondedAt?: string;
+}
+
+/**
+ * Checks if this device is approved to access the room
+ */
+export async function checkDeviceApproved(roomId: string, deviceId = getDeviceId()): Promise<boolean> {
+  if (!roomId) return true;
+  const cleanId = roomId.trim().toUpperCase();
+
+  // If local admin key matches, always approved
+  if (isUserRoomAdmin(cleanId)) return true;
+
+  const db = getFirebaseDb();
+  if (!db) return true; // offline mode
+
+  try {
+    const approvedRef = ref(db, `kharcha_rooms/${cleanId}/approvedDevices/${deviceId}`);
+    const snap = await get(approvedRef);
+    return snap.exists();
+  } catch (err) {
+    console.error('Failed to check device approval:', err);
+    return false;
+  }
+}
+
+/**
+ * Register a device as approved (e.g. when room created or request accepted)
+ */
+export async function setDeviceApproved(
+  roomId: string,
+  deviceId = getDeviceId(),
+  name = 'Flatmate'
+): Promise<boolean> {
+  const cleanId = roomId.trim().toUpperCase();
+  const db = getFirebaseDb();
+  if (!db) return true;
+
+  try {
+    const approvedRef = ref(db, `kharcha_rooms/${cleanId}/approvedDevices/${deviceId}`);
+    await set(approvedRef, {
+      approvedAt: new Date().toISOString(),
+      name,
+    });
+    return true;
+  } catch (err) {
+    console.error('Failed to set device approved:', err);
+    return false;
+  }
+}
+
+/**
+ * Submit a join request from a new user to the room admin
+ */
+export async function requestJoinRoom(
+  roomId: string,
+  name: string,
+  phone?: string
+): Promise<{ success: boolean; requestId: string }> {
+  const cleanId = roomId.trim().toUpperCase();
+  const deviceId = getDeviceId();
+  const db = getFirebaseDb();
+  const requestId = `req_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+
+  const requestPayload: JoinRequest = {
+    id: requestId,
+    roomId: cleanId,
+    deviceId,
+    name: name.trim(),
+    phone: phone?.trim() || '',
+    requestedAt: new Date().toISOString(),
+    status: 'PENDING',
+  };
+
+  if (db) {
+    try {
+      const reqRef = ref(db, `kharcha_rooms/${cleanId}/joinRequests/${requestId}`);
+      await set(reqRef, cleanForFirebase(requestPayload));
+    } catch (e) {
+      console.error('Failed to submit join request:', e);
+      return { success: false, requestId };
+    }
+  }
+
+  // Remember latest request ID on device
+  try {
+    localStorage.setItem(`kharchasplit_req_${cleanId}`, requestId);
+  } catch {
+    // ignore
+  }
+
+  return { success: true, requestId };
+}
+
+/**
+ * Listen for approvals for current device
+ */
+export function subscribeToDeviceApproval(
+  roomId: string,
+  onStatusChange: (status: 'APPROVED' | 'PENDING' | 'REJECTED' | 'NONE') => void
+): Unsubscribe | null {
+  const cleanId = roomId.trim().toUpperCase();
+  const deviceId = getDeviceId();
+  const db = getFirebaseDb();
+  if (!db) {
+    onStatusChange('APPROVED');
+    return null;
+  }
+
+  const roomRef = ref(db, `kharcha_rooms/${cleanId}`);
+
+  return onValue(roomRef, (snapshot) => {
+    const room = snapshot.val();
+    if (!room) {
+      onStatusChange('NONE');
+      return;
+    }
+
+    // 1. Is device in approvedDevices?
+    if (room.approvedDevices && room.approvedDevices[deviceId]) {
+      onStatusChange('APPROVED');
+      return;
+    }
+
+    // 2. Check join requests for this device
+    if (room.joinRequests) {
+      const requests = safeArray<JoinRequest>(room.joinRequests);
+      const myReqs = requests.filter((r) => r.deviceId === deviceId);
+      if (myReqs.length > 0) {
+        // Find latest
+        myReqs.sort((a, b) => new Date(b.requestedAt).getTime() - new Date(a.requestedAt).getTime());
+        const latest = myReqs[0];
+        if (latest.status === 'APPROVED') {
+          onStatusChange('APPROVED');
+          return;
+        } else if (latest.status === 'PENDING') {
+          onStatusChange('PENDING');
+          return;
+        } else if (latest.status === 'REJECTED') {
+          onStatusChange('REJECTED');
+          return;
+        }
+      }
+    }
+
+    onStatusChange('NONE');
+  });
+}
+
+/**
+ * Super Admin or Room Admin: Subscribe to incoming join requests
+ */
+export function subscribeToJoinRequests(
+  roomId: string,
+  onUpdate: (requests: JoinRequest[]) => void
+): Unsubscribe | null {
+  const cleanId = roomId.trim().toUpperCase();
+  const db = getFirebaseDb();
+  if (!db) return null;
+
+  const reqRef = ref(db, `kharcha_rooms/${cleanId}/joinRequests`);
+  return onValue(reqRef, (snapshot) => {
+    const val = snapshot.val();
+    const list = safeArray<JoinRequest>(val);
+    onUpdate(list);
+  });
+}
+
+/**
+ * Room Admin: Approve a join request
+ */
+export async function approveJoinRequest(
+  roomId: string,
+  requestId: string,
+  deviceId: string,
+  name: string
+): Promise<boolean> {
+  const cleanId = roomId.trim().toUpperCase();
+  const db = getFirebaseDb();
+  if (!db) return false;
+
+  try {
+    // 1. Add device to approvedDevices
+    await set(ref(db, `kharcha_rooms/${cleanId}/approvedDevices/${deviceId}`), {
+      approvedAt: new Date().toISOString(),
+      name,
+    });
+
+    // 2. Update request status to APPROVED
+    await update(ref(db, `kharcha_rooms/${cleanId}/joinRequests/${requestId}`), {
+      status: 'APPROVED',
+      respondedAt: new Date().toISOString(),
+    });
+
+    return true;
+  } catch (err) {
+    console.error('Failed to approve join request:', err);
+    return false;
+  }
+}
+
+/**
+ * Room Admin: Reject a join request
+ */
+export async function rejectJoinRequest(
+  roomId: string,
+  requestId: string
+): Promise<boolean> {
+  const cleanId = roomId.trim().toUpperCase();
+  const db = getFirebaseDb();
+  if (!db) return false;
+
+  try {
+    await update(ref(db, `kharcha_rooms/${cleanId}/joinRequests/${requestId}`), {
+      status: 'REJECTED',
+      respondedAt: new Date().toISOString(),
+    });
+    return true;
+  } catch (err) {
+    console.error('Failed to reject join request:', err);
+    return false;
+  }
 }
 
 /**
@@ -505,6 +753,13 @@ export async function pushRoomState(
 
     const stateRef = ref(db, `kharcha_rooms/${roomId}/state`);
     await set(stateRef, sanitizedState);
+
+    if (finalAdminKey) {
+      await set(ref(db, `kharcha_rooms/${roomId}/approvedDevices/${getDeviceId()}`), {
+        approvedAt: new Date().toISOString(),
+        name: 'Room Admin',
+      });
+    }
     return true;
   } catch (err) {
     console.error('Failed to sync room state to Firebase:', err);

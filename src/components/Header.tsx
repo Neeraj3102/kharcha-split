@@ -15,6 +15,7 @@ interface HeaderProps {
   activeMemberCount: number;
   theme: AppTheme;
   onToggleTheme: () => void;
+  pendingRequestsCount?: number;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -30,6 +31,7 @@ export const Header: React.FC<HeaderProps> = ({
   activeMemberCount,
   theme,
   onToggleTheme,
+  pendingRequestsCount = 0,
 }) => {
   const isBumblebee = theme === 'bumblebee';
 
@@ -121,8 +123,10 @@ export const Header: React.FC<HeaderProps> = ({
           {/* MULTIPLAYER FLAT ROOM SWITCHER BUTTON */}
           <button
             onClick={onOpenRoomManager}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold border transition-all cursor-pointer shrink-0 ${
-              activeRoom
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold border transition-all cursor-pointer shrink-0 relative ${
+              pendingRequestsCount > 0
+                ? 'bg-amber-950/80 border-amber-500/80 text-amber-300 hover:bg-amber-900/60 shadow-lg shadow-amber-950/40'
+                : activeRoom
                 ? 'bg-emerald-950/60 border-emerald-700/80 text-emerald-300 hover:bg-emerald-900/50'
                 : 'bg-zinc-900/80 hover:bg-zinc-800 text-zinc-200 border-zinc-700/60'
             }`}
@@ -130,6 +134,11 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <Users className="w-3.5 h-3.5 text-emerald-400" />
             <span>{activeRoom ? `Flat #${activeRoom.roomId} ⇄` : 'My Flats ⇄'}</span>
+            {pendingRequestsCount > 0 && (
+              <span className="px-1.5 py-0.2 rounded-full bg-amber-500 text-zinc-950 text-[10px] font-extrabold animate-bounce">
+                +{pendingRequestsCount}
+              </span>
+            )}
           </button>
 
           {/* FLATMATE MANAGER */}

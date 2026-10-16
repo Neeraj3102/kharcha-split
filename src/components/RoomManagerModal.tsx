@@ -21,6 +21,9 @@ import {
   Crown,
   ArrowRight,
   Trash2,
+  Search,
+  Bell,
+  UserCheck,
 } from 'lucide-react';
 import type { AppState, AppTheme } from '../types';
 import {
@@ -36,7 +39,7 @@ import {
   getSavedRooms,
   removeSavedRoom,
 } from '../utils/firebase';
-import type { FirebaseConfig, RoomMeta, SavedRoom } from '../utils/firebase';
+import type { FirebaseConfig, RoomMeta, SavedRoom, JoinRequest } from '../utils/firebase';
 
 interface RoomManagerModalProps {
   isOpen: boolean;
@@ -48,8 +51,11 @@ interface RoomManagerModalProps {
   roomMeta?: RoomMeta | null;
   isRoomAdmin?: boolean;
   myMemberId?: string | null;
+  pendingRequests?: JoinRequest[];
   onAdminClaimed?: () => void;
   onTransferAdmin?: (newAdminMemberId: string, newAdminMemberName: string) => void;
+  onApproveJoinRequest?: (requestId: string, deviceId: string, name: string) => Promise<void>;
+  onRejectJoinRequest?: (requestId: string) => Promise<void>;
 }
 
 export const RoomManagerModal: React.FC<RoomManagerModalProps> = ({
@@ -62,14 +68,19 @@ export const RoomManagerModal: React.FC<RoomManagerModalProps> = ({
   roomMeta,
   isRoomAdmin = true,
   myMemberId,
+  pendingRequests = [],
   onAdminClaimed,
   onTransferAdmin,
+  onApproveJoinRequest,
+  onRejectJoinRequest,
 }) => {
   const [savedRooms, setSavedRooms] = useState<SavedRoom[]>(getSavedRooms);
-  const [tab, setTab] = useState<'MY_FLATS' | 'INVITE' | 'CREATE' | 'JOIN' | 'CONFIG'>(() => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [tab, setTab] = useState<'MY_FLATS' | 'INVITE' | 'SEARCH' | 'REQUESTS' | 'CREATE' | 'JOIN' | 'CONFIG'>(() => {
+    if (pendingRequests && pendingRequests.length > 0 && isRoomAdmin) return 'REQUESTS';
     const saved = getSavedRooms();
     if (saved.length > 1) return 'MY_FLATS';
-    return activeRoom ? 'INVITE' : 'JOIN';
+    return activeRoom ? 'INVITE' : 'SEARCH';
   });
 
   // Keep saved rooms list fresh
@@ -371,6 +382,35 @@ export const RoomManagerModal: React.FC<RoomManagerModalProps> = ({
             </button>
           )}
 
+          {/* Pending Requests tab for Room Admin */}
+          {isRoomAdmin && pendingRequests && pendingRequests.length > 0 && (
+            <button
+              onClick={() => setTab('REQUESTS')}
+              className={`px-3 py-2 text-xs font-bold border-b-2 transition-all cursor-pointer shrink-0 flex items-center gap-1.5 ${
+                tab === 'REQUESTS'
+                  ? 'border-amber-400 text-amber-400'
+                  : 'border-transparent text-amber-300 hover:text-amber-200'
+              }`}
+            >
+              <Bell className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+              <span>Requests ({pendingRequests.length})</span>
+            </button>
+          )}
+
+          <button
+            onClick={() => setTab('SEARCH')}
+            className={`px-3 py-2 text-xs font-bold border-b-2 transition-all cursor-pointer shrink-0 flex items-center gap-1.5 ${
+              tab === 'SEARCH'
+                ? isBumblebee
+                  ? 'border-yellow-400 text-yellow-400'
+                  : 'border-rose-500 text-rose-500'
+                : 'border-transparent text-zinc-400 hover:text-white'
+            }`}
+          >
+            <Search className="w-3.5 h-3.5" />
+            <span>Search Flats</span>
+          </button>
+
           <button
             onClick={() => setTab('CREATE')}
             className={`px-3 py-2 text-xs font-bold border-b-2 transition-all cursor-pointer shrink-0 ${
@@ -394,7 +434,7 @@ export const RoomManagerModal: React.FC<RoomManagerModalProps> = ({
                 : 'border-transparent text-zinc-400 hover:text-white'
             }`}
           >
-            Join Flat
+            Join with Code
           </button>
 
           <button
@@ -580,6 +620,183 @@ export const RoomManagerModal: React.FC<RoomManagerModalProps> = ({
                   >
                     Switch to Local Mode
                   </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* TAB: JOIN REQUESTS (FOR ROOM ADMIN) */}
+          {tab === 'REQUESTS' && isRoomAdmin && (
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
+                  <Bell className="w-4 h-4 text-amber-400" />
+                  <span>Pending Join Requests ({pendingRequests.length})</span>
+                </h3>
+                <p className="text-[11px] text-zinc-400">
+                  New flatmates requesting permission to enter {activeRoom?.roomName}. Only approved flatmates can access the flat.
+                </p>
+              </div>
+
+              {pendingRequests.length === 0 ? (
+                <div className="p-8 rounded-xl bg-zinc-900/40 border border-dashed border-zinc-800 text-center space-y-1">
+                  <p className="text-xs font-semibold text-zinc-300">No Pending Requests</p>
+                  <p className="text-[11px] text-zinc-500">
+                    When someone tries to join with your room link or code, their request will appear here for you to accept.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {pendingRequests.map((req) => {
+                    const timeAgo = req.requestedAt
+                      ? new Date(req.requestedAt).toLocaleTimeString('en-IN', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })
+                      : 'Just now';
+
+                    return (
+                      <div
+                        key={req.id}
+                        className="p-3.5 rounded-xl bg-zinc-900 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center font-bold text-sm shrink-0">
+                            {req.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <div className="text-xs font-bold text-white flex items-center gap-2">
+                              <span>{req.name}</span>
+                              <span className="text-[9px] font-mono text-zinc-400 bg-zinc-800 px-1.5 py-0.2 rounded">
+                                {timeAgo}
+                              </span>
+                            </div>
+                            {req.phone && (
+                              <div className="text-[10px] text-zinc-400 mt-0.5">
+                                Phone: +91 {req.phone}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 self-end sm:self-center">
+                          {onApproveJoinRequest && (
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                await onApproveJoinRequest(req.id, req.deviceId, req.name);
+                                setStatusMsg({ text: `Approved ${req.name}! Access granted.` });
+                              }}
+                              className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all cursor-pointer shadow-md flex items-center gap-1"
+                            >
+                              <UserCheck className="w-3.5 h-3.5" />
+                              <span>Accept</span>
+                            </button>
+                          )}
+
+                          {onRejectJoinRequest && (
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                await onRejectJoinRequest(req.id);
+                                setStatusMsg({ text: `Declined request from ${req.name}.` });
+                              }}
+                              className="px-2.5 py-1.5 rounded-lg bg-zinc-800 hover:bg-rose-950 hover:text-rose-400 text-zinc-400 border border-zinc-700 text-xs font-semibold transition-all cursor-pointer"
+                            >
+                              Decline
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB: SEARCH FLATS */}
+          {tab === 'SEARCH' && (
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
+                  <Search className="w-4 h-4 text-rose-500" />
+                  <span>Discover & Search Flats</span>
+                </h3>
+                <p className="text-[11px] text-zinc-400">
+                  Search by flat name or room code to join or request access
+                </p>
+              </div>
+
+              <div className="relative">
+                <Search className="w-4 h-4 text-zinc-500 absolute left-3 top-3" />
+                <input
+                  type="text"
+                  placeholder="Search flats (e.g. 710, Flat-2, Koramangala)..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 rounded-xl bg-zinc-900 border border-zinc-700 text-white text-xs placeholder-zinc-500 focus:outline-none focus:border-rose-500"
+                  autoFocus
+                />
+              </div>
+
+              {/* Filtered list of cloud rooms */}
+              <div className="space-y-2 max-h-72 overflow-y-auto">
+                {cloudRooms
+                  .filter((r) => {
+                    if (!searchQuery.trim()) return true;
+                    const q = searchQuery.toLowerCase();
+                    return r.name.toLowerCase().includes(q) || r.id.toLowerCase().includes(q);
+                  })
+                  .map((room) => {
+                    const isCurrent = activeRoom?.roomId === room.id;
+
+                    return (
+                      <div
+                        key={room.id}
+                        className="p-3 rounded-xl bg-zinc-900/60 border border-white/5 flex items-center justify-between gap-3 hover:border-zinc-700 transition-all"
+                      >
+                        <div>
+                          <div className="text-xs font-bold text-white flex items-center gap-2">
+                            <span>{room.name}</span>
+                            <span className="font-mono text-[10px] text-zinc-400 bg-zinc-800 px-1.5 py-0.5 rounded">
+                              #{room.id}
+                            </span>
+                            {isCurrent && (
+                              <span className="text-[9px] text-emerald-400 font-bold bg-emerald-950/80 px-1.5 py-0.2 rounded border border-emerald-800">
+                                Active
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-[10px] text-zinc-400 mt-0.5">
+                            {room.memberCount} flatmates
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            saveActiveRoomId(room.id, room.name);
+                            setActiveRoom({ roomId: room.id, roomName: room.name });
+                            onClose();
+                          }}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                            isCurrent
+                              ? 'bg-emerald-950 text-emerald-300 border border-emerald-700'
+                              : 'bg-zinc-800 hover:bg-rose-900/60 hover:border-rose-700 text-zinc-200 border border-zinc-700'
+                          }`}
+                        >
+                          <span>{isCurrent ? 'Open' : 'Select / Join'}</span>
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    );
+                  })}
+
+                {cloudRooms.length === 0 && (
+                  <div className="p-6 rounded-xl bg-zinc-900/30 border border-dashed border-zinc-800 text-center text-xs text-zinc-500">
+                    No other cloud flats discovered yet. Create one with the "Create Flat" tab!
+                  </div>
                 )}
               </div>
             </div>

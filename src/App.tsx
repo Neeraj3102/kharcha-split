@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { Users, Radio, Copy, Check, ShieldCheck, Plus, FileText, Building2 } from 'lucide-react';
+import { Users, Radio, Copy, Check, ShieldCheck, Plus, FileText, Building2, Bell } from 'lucide-react';
 import type {
   Member,
   Expense,
@@ -24,6 +24,7 @@ import { compressStateToUrl } from './utils/urlState';
 import {
   getActiveRoomId,
   saveActiveRoomId,
+  clearActiveRoom,
   subscribeToRoomState,
   subscribeToAllRooms,
   pushRoomState,
@@ -32,8 +33,14 @@ import {
   isUserRoomAdmin,
   transferRoomAdmin,
   deleteSettledTransactionFromRoom,
+  requestJoinRoom,
+  subscribeToDeviceApproval,
+  subscribeToJoinRequests,
+  approveJoinRequest,
+  rejectJoinRequest,
+  claimRoomAdminKey,
 } from './utils/firebase';
-import type { RoomMeta } from './utils/firebase';
+import type { RoomMeta, JoinRequest } from './utils/firebase';
 
 // Components
 import { Header } from './components/Header';
@@ -48,6 +55,7 @@ import { ShareLedgerModal } from './components/ShareLedgerModal';
 import { RoomManagerModal } from './components/RoomManagerModal';
 import { AdminPortalModal } from './components/AdminPortalModal';
 import { TagSpendingChart } from './components/TagSpendingChart';
+import { JoinRequestModal } from './components/JoinRequestModal';
 
 export function App() {
   const [state, setState] = useState<AppState>(loadInitialState);
@@ -145,6 +153,42 @@ export function App() {
     return isUserRoomAdmin(activeRoom.roomId, roomMeta, myMemberId);
   }, [activeRoom, roomMeta, myMemberId, adminRefreshTick]);
 
+  // Room Access Approval State (Knock-to-join admin authentication)
+  const [deviceApprovalStatus, setDeviceApprovalStatus] = useState<
+    'APPROVED' | 'PENDING' | 'REJECTED' | 'NONE'
+  >('APPROVED');
+  const [pendingJoinRequests, setPendingJoinRequests] = useState<JoinRequest[]>([]);
+
+  // Monitor device approval status or incoming join requests
+  useEffect(() => {
+    if (!activeRoom) {
+      setDeviceApprovalStatus('APPROVED');
+      setPendingJoinRequests([]);
+      return;
+    }
+
+    // Room Admin is always automatically approved
+    if (isRoomAdmin) {
+      setDeviceApprovalStatus('APPROVED');
+      // Admin listens to incoming join requests
+      const unsub = subscribeToJoinRequests(activeRoom.roomId, (reqs) => {
+        setPendingJoinRequests(reqs.filter((r) => r.status === 'PENDING'));
+      });
+      return () => {
+        if (unsub) unsub();
+      };
+    }
+
+    // Non-admin devices: listen for approval status from the room admin
+    const unsubApproval = subscribeToDeviceApproval(activeRoom.roomId, (status) => {
+      setDeviceApprovalStatus(status);
+    });
+
+    return () => {
+      if (unsubApproval) unsubApproval();
+    };
+  }, [activeRoom?.roomId, isRoomAdmin]);
+
   // Active room ref to prevent stale closures during rapid updates
   const activeRoomRef = useRef(activeRoom);
   useEffect(() => {
@@ -181,6 +225,17 @@ export function App() {
       return;
     }
 
+    // Only sync data if approved or admin
+    if (!isRoomAdmin && deviceApprovalStatus !== 'APPROVED') {
+      setState({
+        members: [],
+        expenses: [],
+        settledTransactions: [],
+        customTags: [],
+      });
+      return;
+    }
+
     // Clean state while switching/loading room so previous flat's data doesn't cross-contaminate
     setState({
       members: [],
@@ -205,7 +260,7 @@ export function App() {
     return () => {
       if (unsubscribe) unsubscribe();
     };
-  }, [activeRoom?.roomId]);
+  }, [activeRoom?.roomId, isRoomAdmin, deviceApprovalStatus]);
 
   // Discover active cloud rooms for seamless 1-tap joining when opening on a new device (like a phone)
   const [discoveredRooms, setDiscoveredRooms] = useState<
@@ -521,6 +576,48 @@ export function App() {
     }
   };
 
+  // Join Requests Handlers (Knock-to-join admin authentication)
+  const handleRequestJoin = async (name: string, phone?: string) => {
+    if (!activeRoom) return;
+    await requestJoinRoom(activeRoom.roomId, name, phone);
+    setDeviceApprovalStatus('PENDING');
+  };
+
+  const handleApproveJoinRequest = async (
+    requestId: string,
+    deviceId: string,
+    name: string
+  ) => {
+    if (!activeRoom) return;
+    await approveJoinRequest(activeRoom.roomId, requestId, deviceId, name);
+
+    // If new flatmate is not in members yet, automatically add them to the flat
+    if (!state.members.some((m) => m.name.toLowerCase() === name.toLowerCase())) {
+      const AVATAR_COLORS = ['#ff003b', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4', '#10b981'];
+      handleAddMember({
+        name,
+        upiId: `${name.toLowerCase().replace(/[^a-z0-9]/g, '')}@upi`,
+        avatarColor: AVATAR_COLORS[state.members.length % AVATAR_COLORS.length],
+      });
+    }
+  };
+
+  const handleRejectJoinRequest = async (requestId: string) => {
+    if (!activeRoom) return;
+    await rejectJoinRequest(activeRoom.roomId, requestId);
+  };
+
+  const handleClaimAdminFromModal = async (pin: string) => {
+    if (!activeRoom) return false;
+    const ok = await claimRoomAdminKey(activeRoom.roomId, pin);
+    if (ok) {
+      setAdminRefreshTick((t) => t + 1);
+      setDeviceApprovalStatus('APPROVED');
+      return true;
+    }
+    return false;
+  };
+
   const toggleTheme = () => {
     setTheme((prev) => (prev === 'weeknd' ? 'bumblebee' : 'weeknd'));
   };
@@ -552,7 +649,28 @@ export function App() {
         activeMemberCount={state.members.length}
         theme={theme}
         onToggleTheme={toggleTheme}
+        pendingRequestsCount={pendingJoinRequests.length}
       />
+
+      {/* Admin Alert: Pending Join Requests Banner */}
+      {isRoomAdmin && pendingJoinRequests.length > 0 && activeRoom && (
+        <div className="max-w-6xl w-full mx-auto px-4 pt-3">
+          <div className="p-3 rounded-xl bg-amber-950/70 border border-amber-500/60 flex items-center justify-between gap-3 shadow-lg animate-pulse">
+            <div className="flex items-center gap-2.5 text-xs text-amber-200">
+              <Bell className="w-4 h-4 text-amber-400 shrink-0" />
+              <span>
+                <strong>{pendingJoinRequests.length} flatmate{pendingJoinRequests.length > 1 ? 's' : ''}</strong> waiting for your approval to enter <strong>{activeRoom.roomName}</strong>!
+              </span>
+            </div>
+            <button
+              onClick={() => setIsRoomManagerOpen(true)}
+              className="px-3 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs transition-all cursor-pointer shrink-0 shadow-sm"
+            >
+              Review & Accept
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Real-time Flat Room Status Banner */}
       <div className="max-w-6xl w-full mx-auto px-4 pt-4">
@@ -901,9 +1019,31 @@ export function App() {
         isRoomAdmin={isRoomAdmin}
         roomMeta={roomMeta}
         myMemberId={myMemberId}
+        pendingRequests={pendingJoinRequests}
         onAdminClaimed={() => setAdminRefreshTick((t) => t + 1)}
         onTransferAdmin={handleTransferAdmin}
+        onApproveJoinRequest={handleApproveJoinRequest}
+        onRejectJoinRequest={handleRejectJoinRequest}
       />
+
+      {/* Knock-to-Join Admin Authentication Modal for Non-Approved Devices */}
+      {activeRoom && !isRoomAdmin && deviceApprovalStatus !== 'APPROVED' && (
+        <JoinRequestModal
+          isOpen={true}
+          roomId={activeRoom.roomId}
+          roomName={activeRoom.roomName}
+          roomMeta={roomMeta}
+          status={deviceApprovalStatus}
+          onRequestJoin={handleRequestJoin}
+          onCancel={() => {
+            clearActiveRoom();
+            setActiveRoom(null);
+            setDeviceApprovalStatus('APPROVED');
+          }}
+          onClaimAdmin={handleClaimAdminFromModal}
+          theme={theme}
+        />
+      )}
 
       <AdminPortalModal
         isOpen={isAdminPortalOpen}
