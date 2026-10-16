@@ -52,3 +52,10 @@ export interface AppState {
   settledTransactions: Settlement[];
   customTags: QuickTag[];
 }
+
+export interface UserProfile {
+  name: string;
+  upiId: string;
+  phone?: string;
+  avatarColor: string;
+}

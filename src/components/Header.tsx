@@ -1,6 +1,6 @@
 import React from 'react';
-import { Share2, PlusCircle, UserPlus, FileText, Sparkles, Zap, Flame, Users } from 'lucide-react';
-import type { TimeFilter, AppTheme } from '../types';
+import { Share2, PlusCircle, UserPlus, FileText, Sparkles, Zap, Flame, Users, User } from 'lucide-react';
+import type { TimeFilter, AppTheme, UserProfile } from '../types';
 
 interface HeaderProps {
   timeFilter: TimeFilter;
@@ -16,6 +16,8 @@ interface HeaderProps {
   theme: AppTheme;
   onToggleTheme: () => void;
   pendingRequestsCount?: number;
+  userProfile?: UserProfile | null;
+  onOpenProfile: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -32,6 +34,8 @@ export const Header: React.FC<HeaderProps> = ({
   theme,
   onToggleTheme,
   pendingRequestsCount = 0,
+  userProfile,
+  onOpenProfile,
 }) => {
   const isBumblebee = theme === 'bumblebee';
 
@@ -116,6 +120,34 @@ export const Header: React.FC<HeaderProps> = ({
               <>
                 <Flame className="w-3.5 h-3.5 text-rose-500 fill-rose-500" />
                 <span>Crimson</span>
+              </>
+            )}
+          </button>
+
+          {/* USER PROFILE BUTTON */}
+          <button
+            onClick={onOpenProfile}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold border transition-all cursor-pointer shrink-0 ${
+              userProfile?.name
+                ? 'bg-zinc-900/90 hover:bg-zinc-800 text-white border-zinc-700/80 shadow-sm'
+                : 'bg-zinc-900/60 hover:bg-zinc-800 text-zinc-300 border-zinc-700/50'
+            }`}
+            title="Manage your user profile and receiving UPI QR"
+          >
+            {userProfile?.name ? (
+              <>
+                <div
+                  className="w-4 h-4 rounded-full flex items-center justify-center font-bold text-white text-[10px] shrink-0"
+                  style={{ backgroundColor: userProfile.avatarColor || '#ff003b' }}
+                >
+                  {userProfile.name.charAt(0).toUpperCase()}
+                </div>
+                <span className="max-w-[90px] truncate">{userProfile.name}</span>
+              </>
+            ) : (
+              <>
+                <User className="w-3.5 h-3.5 text-zinc-400" />
+                <span>Profile</span>
               </>
             )}
           </button>

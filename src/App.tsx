@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { Users, Radio, Copy, Check, ShieldCheck, Plus, FileText, Building2, Bell } from 'lucide-react';
+import { Users, Radio, Copy, Check, ShieldCheck, Plus, FileText, Building2, Bell, User } from 'lucide-react';
 import type {
   Member,
   Expense,
@@ -8,6 +8,7 @@ import type {
   TimeFilter,
   AppState,
   AppTheme,
+  UserProfile,
 } from './types';
 import {
   loadInitialState,
@@ -56,6 +57,8 @@ import { RoomManagerModal } from './components/RoomManagerModal';
 import { AdminPortalModal } from './components/AdminPortalModal';
 import { TagSpendingChart } from './components/TagSpendingChart';
 import { JoinRequestModal } from './components/JoinRequestModal';
+import { UserProfileModal } from './components/UserProfileModal';
+import { getUserProfile, saveUserProfile } from './utils/userProfile';
 
 export function App() {
   const [state, setState] = useState<AppState>(loadInitialState);
@@ -81,11 +84,15 @@ export function App() {
   // Modals state
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [isShareLedgerOpen, setIsShareLedgerOpen] = useState(false);
   const [isRoomManagerOpen, setIsRoomManagerOpen] = useState(false);
   const [isAdminPortalOpen, setIsAdminPortalOpen] = useState(false);
   const [selectedTagFilter, setSelectedTagFilter] = useState<string | null>(null);
+
+  // User Profile state
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(getUserProfile);
 
   // QR Modal state
   const [qrState, setQrState] = useState<{
@@ -357,6 +364,7 @@ export function App() {
   const isAnyModalOpen =
     isAddExpenseOpen ||
     isAddMemberOpen ||
+    isProfileOpen ||
     isReportOpen ||
     isShareLedgerOpen ||
     isRoomManagerOpen ||
@@ -365,6 +373,34 @@ export function App() {
     !!markPaidSettlement;
 
   // Handlers
+  const handleSaveUserProfile = (updatedProfile: UserProfile, syncWithFlatmateId?: string) => {
+    setUserProfile(updatedProfile);
+    saveUserProfile(updatedProfile);
+
+    // If user requested to sync their details with their active flatmate member record:
+    if (syncWithFlatmateId) {
+      const updatedMembers = state.members.map((m) => {
+        if (m.id === syncWithFlatmateId) {
+          return {
+            ...m,
+            name: updatedProfile.name,
+            upiId: updatedProfile.upiId || m.upiId,
+            phone: updatedProfile.phone || m.phone,
+            avatarColor: updatedProfile.avatarColor,
+          };
+        }
+        return m;
+      });
+
+      const updated = {
+        ...state,
+        members: updatedMembers,
+      };
+      setState(updated);
+      syncToCloud(updated);
+    }
+  };
+
   const handleAddMember = (newMemberData: Omit<Member, 'id'>) => {
     const newMember: Member = {
       ...newMemberData,
@@ -650,6 +686,8 @@ export function App() {
         theme={theme}
         onToggleTheme={toggleTheme}
         pendingRequestsCount={pendingJoinRequests.length}
+        userProfile={userProfile}
+        onOpenProfile={() => setIsProfileOpen(true)}
       />
 
       {/* Admin Alert: Pending Join Requests Banner */}
@@ -938,10 +976,30 @@ export function App() {
             {/* 4. WhatsApp / Export Report */}
             <button
               onClick={() => setIsReportOpen(true)}
-              className="flex flex-col items-center justify-center py-1 px-2.5 rounded-xl text-zinc-400 hover:text-white transition-all cursor-pointer"
+              className="flex flex-col items-center justify-center py-1 px-2 rounded-xl text-zinc-400 hover:text-white transition-all cursor-pointer"
             >
               <FileText className="w-4 h-4 text-emerald-400" />
               <span className="text-[10px] font-medium mt-0.5">Report</span>
+            </button>
+
+            {/* 5. User Profile */}
+            <button
+              onClick={() => setIsProfileOpen(true)}
+              className="flex flex-col items-center justify-center py-1 px-2 rounded-xl text-zinc-400 hover:text-white transition-all cursor-pointer"
+            >
+              {userProfile?.name ? (
+                <div
+                  className="w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold text-white shadow-sm"
+                  style={{ backgroundColor: userProfile.avatarColor || '#ff003b' }}
+                >
+                  {userProfile.name.charAt(0).toUpperCase()}
+                </div>
+              ) : (
+                <User className="w-4 h-4 text-zinc-400" />
+              )}
+              <span className="text-[10px] font-medium mt-0.5 truncate max-w-[55px]">
+                {userProfile?.name ? userProfile.name.split(' ')[0] : 'Profile'}
+              </span>
             </button>
           </div>
         </nav>
@@ -1024,6 +1082,22 @@ export function App() {
         onTransferAdmin={handleTransferAdmin}
         onApproveJoinRequest={handleApproveJoinRequest}
         onRejectJoinRequest={handleRejectJoinRequest}
+      />
+
+      {/* User Profile Modal */}
+      <UserProfileModal
+        isOpen={isProfileOpen}
+        onClose={() => setIsProfileOpen(false)}
+        profile={userProfile}
+        onSaveProfile={handleSaveUserProfile}
+        activeRoom={activeRoom}
+        members={state.members}
+        myMemberId={myMemberId}
+        onSetMyMemberId={handleSetMyMemberId}
+        isRoomAdmin={isRoomAdmin}
+        netBalances={netBalances}
+        expenses={state.expenses}
+        theme={theme}
       />
 
       {/* Knock-to-Join Admin Authentication Modal for Non-Approved Devices */}
