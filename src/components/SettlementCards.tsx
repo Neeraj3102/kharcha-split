@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ArrowRight, QrCode, ExternalLink, Check, Sparkles, History, Trash2, ChevronDown, ChevronUp, UserCheck } from 'lucide-react';
-import type { Member, Settlement } from '../types';
+import type { Member, Settlement, AppTheme } from '../types';
 import { generateUpiUri } from '../utils/upi';
 
 interface SettlementCardsProps {
@@ -13,6 +13,7 @@ interface SettlementCardsProps {
   onOpenMarkPaid: (settlement: Settlement) => void;
   onDeleteSettledTransaction?: (id: string) => void;
   onSetMyMemberId?: (id: string, name: string) => void;
+  theme?: AppTheme;
 }
 
 export const SettlementCards: React.FC<SettlementCardsProps> = ({
@@ -25,7 +26,9 @@ export const SettlementCards: React.FC<SettlementCardsProps> = ({
   onOpenMarkPaid,
   onDeleteSettledTransaction,
   onSetMyMemberId,
+  theme = 'weeknd',
 }) => {
+  const isPurple = theme === 'purple';
   const memberMap = new Map(members.map((m) => [m.id, m]));
   const [showHistory, setShowHistory] = useState(false);
   const [identityPromptSettlement, setIdentityPromptSettlement] = useState<Settlement | null>(null);
@@ -104,7 +107,11 @@ export const SettlementCards: React.FC<SettlementCardsProps> = ({
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-bold uppercase tracking-wider text-zinc-400 font-mono flex items-center gap-2">
               <span>⚡ Minimized Settlements ({settlements.length})</span>
-              <span className="text-[10px] text-rose-400 bg-rose-950/80 px-2 py-0.5 rounded-full border border-rose-800/60">
+              <span className={`text-[10px] px-2 py-0.5 rounded-full border ${
+                isPurple
+                  ? 'text-purple-400 bg-purple-950/80 border-purple-800/60'
+                  : 'text-rose-400 bg-rose-950/80 border-rose-800/60'
+              }`}>
                 Greedy Min-Flow Algorithm
               </span>
             </h2>
@@ -136,7 +143,7 @@ export const SettlementCards: React.FC<SettlementCardsProps> = ({
                   key={settlement.id}
                   className={`glass-panel glass-card-hover rounded-2xl p-4 sm:p-5 flex flex-col justify-between gap-4 border relative overflow-hidden transition-all ${
                     isUserDebtor
-                      ? 'border-rose-500/40 bg-rose-950/15'
+                      ? isPurple ? 'border-purple-500/40 bg-purple-950/15' : 'border-rose-500/40 bg-rose-950/15'
                       : isUserCreditor
                       ? 'border-emerald-500/40 bg-emerald-950/15'
                       : 'border-white/5'
@@ -163,10 +170,10 @@ export const SettlementCards: React.FC<SettlementCardsProps> = ({
                         <div className="text-xs font-bold text-white leading-tight flex items-center gap-1">
                           <span>{fromMember.name}</span>
                           {isUserDebtor && (
-                            <span className="text-[9px] text-rose-400 font-bold">(You)</span>
+                            <span className={`text-[9px] font-bold ${isPurple ? 'text-purple-400' : 'text-rose-400'}`}>(You)</span>
                           )}
                         </div>
-                        <div className="text-[10px] text-rose-400 font-medium">Owes</div>
+                        <div className={`text-[10px] font-medium ${isPurple ? 'text-purple-400' : 'text-rose-400'}`}>Owes</div>
                       </div>
                     </div>
 
@@ -201,7 +208,9 @@ export const SettlementCards: React.FC<SettlementCardsProps> = ({
                   {/* Amount Display */}
                   <div className="flex items-baseline justify-between pt-2 border-t border-white/5">
                     <span className="text-xs text-zinc-400 font-medium">Settlement Amount</span>
-                    <span className="text-xl sm:text-2xl font-extrabold text-white font-mono tracking-tight text-rose-500">
+                    <span className={`text-xl sm:text-2xl font-extrabold font-mono tracking-tight ${
+                      isPurple ? 'text-purple-400' : 'text-rose-500'
+                    }`}>
                       ₹{settlement.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                     </span>
                   </div>
@@ -209,14 +218,26 @@ export const SettlementCards: React.FC<SettlementCardsProps> = ({
                   {/* Action Buttons: Pay UPI, QR Code, Mark-as-Paid */}
                   <div className="grid grid-cols-3 gap-2 pt-1">
                     {/* 1. Direct UPI Link (Mobile Launcher) */}
-                    <a
-                      href={upiUri}
-                      className="py-2 px-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border border-zinc-700/60 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all text-center"
-                      title="Opens GPay, PhonePe, or Paytm with pre-filled amount"
-                    >
-                      <ExternalLink className="w-3.5 h-3.5 text-rose-500" />
-                      <span className="text-[11px]">Pay UPI</span>
-                    </a>
+                    {upiUri ? (
+                      <a
+                        href={upiUri}
+                        className="py-2 px-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border border-zinc-700/60 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all text-center"
+                        title="Opens GPay, PhonePe, or Paytm with pre-filled amount"
+                      >
+                        <ExternalLink className={`w-3.5 h-3.5 ${isPurple ? 'text-purple-400' : 'text-rose-500'}`} />
+                        <span className="text-[11px]">Pay UPI</span>
+                      </a>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => alert(`No valid UPI ID configured for ${toMember.name}. Please ask them to update their UPI ID in Flatmates.`)}
+                        className="py-2 px-2 rounded-xl bg-zinc-900/60 text-zinc-500 border border-zinc-800 text-xs font-medium flex items-center justify-center gap-1.5 transition-all text-center cursor-pointer"
+                        title="No UPI ID found"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5 text-zinc-600" />
+                        <span className="text-[11px]">No UPI</span>
+                      </button>
+                    )}
 
                     {/* 2. QR Code (Desktop Scan) */}
                     <button

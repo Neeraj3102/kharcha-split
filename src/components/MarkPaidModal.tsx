@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, CheckCircle, MessageSquare } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import type { Member, Settlement } from '../types';
+import type { Member, Settlement, AppTheme } from '../types';
 import { createSettlementWhatsAppUrl } from '../utils/whatsapp';
 
 interface MarkPaidModalProps {
@@ -10,6 +10,7 @@ interface MarkPaidModalProps {
   settlement: Settlement | null;
   members: Member[];
   onConfirmSettlement: (settlement: Settlement) => void;
+  theme?: AppTheme;
 }
 
 export const MarkPaidModal: React.FC<MarkPaidModalProps> = ({
@@ -18,7 +19,9 @@ export const MarkPaidModal: React.FC<MarkPaidModalProps> = ({
   settlement,
   members,
   onConfirmSettlement,
+  theme = 'weeknd',
 }) => {
+  const isPurple = theme === 'purple';
   const [sendWhatsApp, setSendWhatsApp] = useState(true);
 
   if (!isOpen || !settlement) return null;
@@ -43,13 +46,15 @@ export const MarkPaidModal: React.FC<MarkPaidModalProps> = ({
       window.open(url, '_blank');
     }
 
-    // 2. Trigger Confetti celebration (The Weeknd Red & Gold theme)
+    // 2. Trigger Confetti celebration (Theme aware)
     try {
       confetti({
         particleCount: 80,
         spread: 70,
         origin: { y: 0.6 },
-        colors: ['#ff003b', '#f59e0b', '#ffffff', '#ec4899'],
+        colors: isPurple
+          ? ['#a855f7', '#6366f1', '#ffffff', '#ec4899']
+          : ['#ff003b', '#f59e0b', '#ffffff', '#ec4899'],
       });
     } catch {
       // ignore
@@ -61,8 +66,14 @@ export const MarkPaidModal: React.FC<MarkPaidModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-      <div className="glass-panel w-full max-w-md rounded-2xl border border-white/10 shadow-2xl overflow-hidden p-6 space-y-5">
+    <div 
+      onClick={onClose}
+      className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md cursor-pointer"
+    >
+      <div 
+        onClick={(e) => e.stopPropagation()}
+        className="glass-panel w-full max-w-md rounded-2xl border border-white/10 shadow-2xl overflow-hidden p-6 space-y-5 cursor-default"
+      >
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-white/10">
           <div className="flex items-center gap-2">
@@ -86,11 +97,13 @@ export const MarkPaidModal: React.FC<MarkPaidModalProps> = ({
         <div className="p-4 rounded-xl bg-zinc-900 border border-white/5 space-y-2 text-center">
           <div className="text-xs text-zinc-400">Settling Debt Between</div>
           <div className="flex items-center justify-center gap-3 text-sm font-bold text-white">
-            <span className="text-rose-400">{fromName}</span>
+            <span className={isPurple ? 'text-purple-400' : 'text-rose-400'}>{fromName}</span>
             <span className="text-zinc-500">➔</span>
             <span className="text-emerald-400">{toName}</span>
           </div>
-          <div className="text-3xl font-extrabold text-white font-mono text-rose-500 pt-1">
+          <div className={`text-3xl font-extrabold font-mono pt-1 ${
+            isPurple ? 'text-purple-400' : 'text-rose-500'
+          }`}>
             ₹{settlement.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
           </div>
         </div>
@@ -102,7 +115,9 @@ export const MarkPaidModal: React.FC<MarkPaidModalProps> = ({
               type="checkbox"
               checked={sendWhatsApp}
               onChange={(e) => setSendWhatsApp(e.target.checked)}
-              className="mt-0.5 rounded border-zinc-700 text-rose-600 focus:ring-rose-500 accent-rose-600 cursor-pointer"
+              className={`mt-0.5 rounded border-zinc-700 cursor-pointer ${
+                isPurple ? 'accent-purple-600' : 'accent-rose-600'
+              }`}
             />
             <div className="text-xs">
               <div className="font-semibold text-zinc-200 flex items-center gap-1.5">

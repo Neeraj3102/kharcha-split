@@ -10,10 +10,13 @@ export function generateUpiUri(
   amount: number,
   note = 'KharchaSplit Settlement'
 ): string {
-  const cleanUpi = upiId.trim();
-  const cleanName = payeeName.trim();
+  const cleanUpi = upiId ? upiId.trim() : '';
+  if (!cleanUpi || !cleanUpi.includes('@')) {
+    return '';
+  }
+  const cleanName = payeeName ? payeeName.trim() : 'Flatmate';
   const cleanAmount = amount.toFixed(2);
-  const cleanNote = note.trim();
+  const cleanNote = note ? note.trim() : 'KharchaSplit Settlement';
 
   const params = new URLSearchParams({
     pa: cleanUpi,

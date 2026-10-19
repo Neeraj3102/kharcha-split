@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, UserPlus, Trash2, ShieldCheck, Phone, AlertTriangle, RotateCcw, Crown, UserCheck } from 'lucide-react';
-import type { Member } from '../types';
+import type { Member, AppTheme } from '../types';
 
 interface MemberManagerProps {
   isOpen: boolean;
@@ -17,6 +17,7 @@ interface MemberManagerProps {
   onTransferAdmin?: (newAdminMemberId: string, newAdminMemberName: string) => void;
   adminMemberId?: string;
   adminMemberName?: string;
+  theme?: AppTheme;
 }
 
 const AVATAR_COLORS = [
@@ -42,7 +43,9 @@ export const MemberManager: React.FC<MemberManagerProps> = ({
   onSetMyMemberId,
   onTransferAdmin,
   adminMemberId,
+  theme = 'weeknd',
 }) => {
+  const isPurple = theme === 'purple';
   const [name, setName] = useState('');
   const [upiId, setUpiId] = useState('');
   const [phone, setPhone] = useState('');
@@ -53,20 +56,37 @@ export const MemberManager: React.FC<MemberManagerProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) {
+    const cleanName = name.trim();
+    if (!cleanName) {
       setError('Please enter a name for the flatmate');
       return;
     }
+
+    // Check duplicate name
+    const isDuplicate = members.some(
+      (m) => m.name.trim().toLowerCase() === cleanName.toLowerCase()
+    );
+    if (isDuplicate) {
+      setError(`A flatmate with the name "${cleanName}" already exists. Please use a unique name or add an initial.`);
+      return;
+    }
+
     if (!upiId.trim() || !upiId.includes('@')) {
       setError('Please enter a valid UPI ID (e.g., name@okhdfcbank, mobile@upi)');
       return;
     }
 
+    const cleanPhone = phone.trim() ? phone.replace(/[^0-9]/g, '') : '';
+    if (cleanPhone && (cleanPhone.length !== 10 || !/^[6-9]\d{9}$/.test(cleanPhone))) {
+      setError('Please enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9 (or leave blank)');
+      return;
+    }
+
     const randomColor = AVATAR_COLORS[members.length % AVATAR_COLORS.length];
     onAddMember({
-      name: name.trim(),
+      name: cleanName,
       upiId: upiId.trim().toLowerCase(),
-      phone: phone.trim() ? phone.replace(/[^0-9]/g, '') : undefined,
+      phone: cleanPhone || undefined,
       avatarColor: randomColor,
     });
 
@@ -82,12 +102,18 @@ export const MemberManager: React.FC<MemberManagerProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="glass-panel w-full max-w-lg rounded-2xl border border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div 
+      onClick={onClose}
+      className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm cursor-pointer"
+    >
+      <div 
+        onClick={(e) => e.stopPropagation()}
+        className="glass-panel w-full max-w-lg rounded-2xl border border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[90vh] cursor-default"
+      >
         {/* Modal Header */}
         <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="p-2 rounded-lg bg-rose-500/10 text-rose-500">
+            <span className={`p-2 rounded-lg ${isPurple ? 'bg-purple-500/10 text-purple-400' : 'bg-rose-500/10 text-rose-500'}`}>
               <UserPlus className="w-5 h-5" />
             </span>
             <div>
@@ -107,12 +133,14 @@ export const MemberManager: React.FC<MemberManagerProps> = ({
         <div className="p-6 overflow-y-auto space-y-6">
           {/* Add Flatmate Form */}
           <form onSubmit={handleSubmit} className="p-4 rounded-xl bg-zinc-900/60 border border-white/5 space-y-3">
-            <h3 className="text-xs uppercase font-mono tracking-wider text-rose-400 font-bold">
+            <h3 className={`text-xs uppercase font-mono tracking-wider font-bold ${isPurple ? 'text-purple-400' : 'text-rose-400'}`}>
               + Add New Flatmate
             </h3>
             
             {error && (
-              <div className="p-2.5 rounded-lg bg-rose-950/60 border border-rose-800 text-rose-300 text-xs">
+              <div className={`p-2.5 rounded-lg border text-xs ${
+                isPurple ? 'bg-purple-950/60 border-purple-800 text-purple-300' : 'bg-rose-950/60 border-rose-800 text-rose-300'
+              }`}>
                 {error}
               </div>
             )}
@@ -127,7 +155,9 @@ export const MemberManager: React.FC<MemberManagerProps> = ({
                   placeholder="e.g. Rahul Sharma"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg bg-zinc-800/90 border border-zinc-700 text-white text-xs placeholder-zinc-500 focus:outline-none focus:border-rose-500 transition-all"
+                  className={`w-full px-3 py-2 rounded-lg bg-zinc-800/90 border border-zinc-700 text-white text-xs placeholder-zinc-500 focus:outline-none transition-all ${
+                    isPurple ? 'focus:border-purple-500' : 'focus:border-rose-500'
+                  }`}
                 />
               </div>
 
@@ -141,7 +171,9 @@ export const MemberManager: React.FC<MemberManagerProps> = ({
                   placeholder="e.g. rahul@okaxis"
                   value={upiId}
                   onChange={(e) => setUpiId(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg bg-zinc-800/90 border border-zinc-700 text-white text-xs placeholder-zinc-500 focus:outline-none focus:border-rose-500 font-mono transition-all"
+                  className={`w-full px-3 py-2 rounded-lg bg-zinc-800/90 border border-zinc-700 text-white text-xs placeholder-zinc-500 focus:outline-none font-mono transition-all ${
+                    isPurple ? 'focus:border-purple-500' : 'focus:border-rose-500'
+                  }`}
                 />
               </div>
             </div>
@@ -156,13 +188,19 @@ export const MemberManager: React.FC<MemberManagerProps> = ({
                 placeholder="e.g. 9876543210 (10 digits)"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg bg-zinc-800/90 border border-zinc-700 text-white text-xs placeholder-zinc-500 focus:outline-none focus:border-rose-500 font-mono transition-all"
+                className={`w-full px-3 py-2 rounded-lg bg-zinc-800/90 border border-zinc-700 text-white text-xs placeholder-zinc-500 focus:outline-none font-mono transition-all ${
+                  isPurple ? 'focus:border-purple-500' : 'focus:border-rose-500'
+                }`}
               />
             </div>
 
             <button
               type="submit"
-              className="w-full py-2.5 rounded-lg bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white text-xs font-bold transition-all cursor-pointer shadow-md"
+              className={`w-full py-2.5 rounded-lg text-white text-xs font-bold transition-all cursor-pointer shadow-md ${
+                isPurple
+                  ? 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500'
+                  : 'bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600'
+              }`}
             >
               Add to Flat
             </button>
@@ -388,7 +426,7 @@ export const MemberManager: React.FC<MemberManagerProps> = ({
         {/* Modal Footer */}
         <div className="px-6 py-3 border-t border-white/10 bg-zinc-950/60 flex items-center justify-between text-xs text-zinc-400">
           <div className="flex items-center gap-1">
-            <ShieldCheck className="w-4 h-4 text-rose-500" />
+            <ShieldCheck className={`w-4 h-4 ${isPurple ? 'text-purple-400' : 'text-rose-500'}`} />
             <span>UPI IDs are kept 100% private in your browser</span>
           </div>
           <button

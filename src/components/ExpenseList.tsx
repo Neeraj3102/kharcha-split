@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { Trash2, Calendar, ChevronDown, ChevronUp, User } from 'lucide-react';
-import type { Expense, Member } from '../types';
+import type { Expense, Member, AppTheme } from '../types';
 
 interface ExpenseListProps {
   expenses: Expense[];
   members: Member[];
   onDeleteExpense: (id: string) => void;
   isRoomAdmin?: boolean;
+  theme?: AppTheme;
 }
 
 export const ExpenseList: React.FC<ExpenseListProps> = ({
@@ -14,7 +15,9 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
   members,
   onDeleteExpense,
   isRoomAdmin = true,
+  theme = 'weeknd',
 }) => {
+  const isPurple = theme === 'purple';
   const memberMap = new Map(members.map((m) => [m.id, m]));
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
@@ -96,7 +99,9 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
                 {/* Right: Amount & Action buttons */}
                 <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                   <div className="text-right">
-                    <div className="text-sm sm:text-base font-extrabold text-white font-mono text-rose-500">
+                    <div className={`text-sm sm:text-base font-extrabold font-mono ${
+                      isPurple ? 'text-purple-400' : 'text-rose-500'
+                    }`}>
                       ₹{expense.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                     </div>
                     <div className="text-[10px] text-zinc-500">

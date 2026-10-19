@@ -87,8 +87,14 @@ export const ReportModal: React.FC<ReportModalProps> = ({
   const isPurple = theme === 'purple';
 
   return (
-    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
-      <div className="glass-panel w-full max-w-lg rounded-2xl border border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+    <div 
+      onClick={onClose}
+      className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md cursor-pointer"
+    >
+      <div 
+        onClick={(e) => e.stopPropagation()}
+        className="glass-panel w-full max-w-lg rounded-2xl border border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[92vh] cursor-default"
+      >
         {/* Header */}
         <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between">
           <div className="flex items-center gap-2">

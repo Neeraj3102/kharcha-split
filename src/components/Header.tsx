@@ -199,19 +199,20 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               onClick={onOpenShareLedger}
               className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-zinc-900/80 hover:bg-zinc-800 text-zinc-200 border border-zinc-700/60 transition-all cursor-pointer shrink-0"
-              title="Export full ledger as PDF or copy shareable link"
+              title="Export complete ledger PDF or copy live flatmate link"
             >
               <Share2 className={`w-4 h-4 ${isPurple ? 'text-purple-400' : 'text-rose-400'}`} />
-              <span>PDF Export</span>
+              <span>Share Ledger</span>
             </button>
 
             {/* WHATSAPP REPORT */}
             <button
               onClick={onOpenReport}
               className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-zinc-900/80 hover:bg-zinc-800 text-zinc-200 border border-zinc-700/60 transition-all cursor-pointer shrink-0"
+              title="Generate summary message and window report for WhatsApp"
             >
               <FileText className="w-4 h-4 text-emerald-400" />
-              <span>WhatsApp Report</span>
+              <span>WhatsApp Summary</span>
             </button>
           </div>
         </div>

@@ -926,6 +926,7 @@ export function App() {
                 onOpenMarkPaid={handleOpenMarkPaid}
                 onDeleteSettledTransaction={handleDeleteSettledTransaction}
                 onSetMyMemberId={handleSetMyMemberId}
+                theme={theme}
               />
             </section>
 
@@ -949,6 +950,7 @@ export function App() {
                 members={state.members}
                 onDeleteExpense={handleDeleteExpense}
                 isRoomAdmin={isRoomAdmin}
+                theme={theme}
               />
             </section>
           </>
@@ -1069,6 +1071,7 @@ export function App() {
         tags={allTags}
         onAddCustomTag={handleAddCustomTag}
         onSaveExpense={handleAddExpense}
+        theme={theme}
       />
 
       <MemberManager
@@ -1086,6 +1089,7 @@ export function App() {
         onTransferAdmin={handleTransferAdmin}
         adminMemberId={roomMeta?.adminMemberId}
         adminMemberName={roomMeta?.adminMemberName}
+        theme={theme}
       />
 
       <QRCodeModal
@@ -1096,6 +1100,7 @@ export function App() {
         toName={qrState.toName}
         toUpiId={qrState.toUpiId}
         amount={qrState.amount}
+        theme={theme}
       />
 
       <MarkPaidModal
@@ -1104,6 +1109,7 @@ export function App() {
         settlement={markPaidSettlement}
         members={state.members}
         onConfirmSettlement={handleConfirmSettlement}
+        theme={theme}
       />
 
       <ReportModal

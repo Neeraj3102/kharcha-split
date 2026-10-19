@@ -148,10 +148,16 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
       return;
     }
 
+    const cleanPhone = phone.trim() ? phone.replace(/[^0-9]/g, '') : '';
+    if (cleanPhone && (cleanPhone.length !== 10 || !/^[6-9]\d{9}$/.test(cleanPhone))) {
+      setErrorMsg('Please enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9 (or leave blank)');
+      return;
+    }
+
     const updatedProfile: UserProfile = {
       name: name.trim(),
       upiId: upiId.trim().toLowerCase(),
-      phone: phone.trim() ? phone.replace(/[^0-9]/g, '') : '',
+      phone: cleanPhone,
       avatarColor,
     };
 
@@ -169,8 +175,14 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="glass-panel w-full max-w-lg rounded-2xl border border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+    <div 
+      onClick={onClose}
+      className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200 cursor-pointer"
+    >
+      <div 
+        onClick={(e) => e.stopPropagation()}
+        className="glass-panel w-full max-w-lg rounded-2xl border border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[92vh] cursor-default"
+      >
         {/* Modal Header */}
         <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
