@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { X, Send, Copy, Check, FileText, FileDown } from 'lucide-react';
 import type { Expense, Member, TimeFilter, AppTheme } from '../types';
 import { createExpenseReportWhatsAppUrl } from '../utils/whatsapp';
@@ -26,36 +26,47 @@ export const ReportModal: React.FC<ReportModalProps> = ({
   const [pdfGenerating, setPdfGenerating] = useState(false);
   const [pdfStatus, setPdfStatus] = useState<string | null>(null);
 
+  // Filter expenses according to chosen report window using pure memoization
+  const [renderTimestamp] = useState(() => Date.now());
+
+  const filteredExpenses = useMemo(() => {
+    if (!isOpen) return [];
+    if (selectedFilter === 'ALL') return expenses;
+
+    const now = new Date(renderTimestamp);
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    const oneWeekAgoMs = renderTimestamp - 7 * 24 * 60 * 60 * 1000;
+
+    return expenses.filter((e) => {
+      const expDate = new Date(e.date);
+
+      if (selectedFilter === 'THIS_MONTH') {
+        return (
+          expDate.getMonth() === currentMonth &&
+          expDate.getFullYear() === currentYear
+        );
+      }
+
+      if (selectedFilter === 'THIS_WEEK') {
+        return expDate.getTime() >= oneWeekAgoMs;
+      }
+
+      return true;
+    });
+  }, [isOpen, expenses, selectedFilter, renderTimestamp]);
+
+  const { url, message } = useMemo(() => {
+    if (!isOpen) return { url: '', message: '' };
+    return createExpenseReportWhatsAppUrl(
+      filteredExpenses,
+      members,
+      selectedFilter,
+      shareableUrl
+    );
+  }, [isOpen, filteredExpenses, members, selectedFilter, shareableUrl]);
+
   if (!isOpen) return null;
-
-  // Filter expenses according to chosen report window
-  const now = new Date();
-  const filteredExpenses = expenses.filter((e) => {
-    if (selectedFilter === 'ALL') return true;
-    const expDate = new Date(e.date);
-
-    if (selectedFilter === 'THIS_MONTH') {
-      return (
-        expDate.getMonth() === now.getMonth() &&
-        expDate.getFullYear() === now.getFullYear()
-      );
-    }
-
-    if (selectedFilter === 'THIS_WEEK') {
-      const oneWeekAgo = new Date();
-      oneWeekAgo.setDate(now.getDate() - 7);
-      return expDate >= oneWeekAgo;
-    }
-
-    return true;
-  });
-
-  const { url, message } = createExpenseReportWhatsAppUrl(
-    filteredExpenses,
-    members,
-    selectedFilter,
-    shareableUrl
-  );
 
   const handleCopy = () => {
     navigator.clipboard.writeText(message);

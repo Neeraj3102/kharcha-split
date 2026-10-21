@@ -174,7 +174,7 @@ export function App() {
     } else {
       setMyMemberIdState(null);
     }
-  }, [activeRoom?.roomId]);
+  }, [activeRoom]);
 
   const handleSetMyMemberId = (memberId: string, memberName: string) => {
     if (!activeRoom) return;
@@ -185,9 +185,31 @@ export function App() {
 
   // Authority check: Is current user the Room Admin? (Local mode has full admin rights)
   const isRoomAdmin = useMemo(() => {
+    void adminRefreshTick;
     if (!activeRoom) return true;
     return isUserRoomAdmin(activeRoom.roomId, roomMeta, myMemberId);
   }, [activeRoom, roomMeta, myMemberId, adminRefreshTick]);
+
+  // Active room ref to prevent stale closures during rapid updates
+  const activeRoomRef = useRef(activeRoom);
+  useEffect(() => {
+    activeRoomRef.current = activeRoom;
+  }, [activeRoom]);
+
+  // Cleanly disconnect and wipe local cache when a room is purged or doesn't exist
+  const handleRoomPurgedDisconnect = useCallback((roomId?: string) => {
+    const targetId = roomId || activeRoomRef.current?.roomId;
+    if (targetId) {
+      removeSavedRoom(targetId);
+      clearRoomAdminKey(targetId);
+      clearMyMemberId(targetId);
+    }
+    clearActiveRoom();
+    setActiveRoom(null);
+    setRoomMeta(null);
+    setDeviceApprovalStatus('APPROVED');
+    setState(loadInitialState());
+  }, []);
 
   // Room Access Approval State (Knock-to-join admin authentication)
   const [deviceApprovalStatus, setDeviceApprovalStatus] = useState<
@@ -230,28 +252,7 @@ export function App() {
     return () => {
       if (unsubApproval) unsubApproval();
     };
-  }, [activeRoom?.roomId, isRoomAdmin]);
-
-  // Active room ref to prevent stale closures during rapid updates
-  const activeRoomRef = useRef(activeRoom);
-  useEffect(() => {
-    activeRoomRef.current = activeRoom;
-  }, [activeRoom]);
-
-  // Cleanly disconnect and wipe local cache when a room is purged or doesn't exist
-  const handleRoomPurgedDisconnect = useCallback((roomId?: string) => {
-    const targetId = roomId || activeRoomRef.current?.roomId;
-    if (targetId) {
-      removeSavedRoom(targetId);
-      clearRoomAdminKey(targetId);
-      clearMyMemberId(targetId);
-    }
-    clearActiveRoom();
-    setActiveRoom(null);
-    setRoomMeta(null);
-    setDeviceApprovalStatus('APPROVED');
-    setState(loadInitialState());
-  }, []);
+  }, [activeRoom, isRoomAdmin, handleRoomPurgedDisconnect]);
 
   // Open Master Admin Portal or switch room via URL hash e.g. #admin or #room=710
   useEffect(() => {
@@ -322,7 +323,7 @@ export function App() {
     return () => {
       if (unsubscribe) unsubscribe();
     };
-  }, [activeRoom?.roomId, isRoomAdmin, deviceApprovalStatus]);
+  }, [activeRoom, isRoomAdmin, deviceApprovalStatus, handleRoomPurgedDisconnect]);
 
   // Discover active cloud rooms for seamless 1-tap joining when opening on a new device (like a phone)
   const [discoveredRooms, setDiscoveredRooms] = useState<
@@ -330,10 +331,7 @@ export function App() {
   >([]);
 
   useEffect(() => {
-    if (activeRoom) {
-      setDiscoveredRooms([]);
-      return;
-    }
+    if (activeRoom) return;
 
     const unsub = subscribeToAllRooms(
       (allRooms) => {
@@ -372,32 +370,38 @@ export function App() {
   const allTags: QuickTag[] = [...DEFAULT_INDIAN_TAGS, ...state.customTags];
 
   // Filtered Expenses by Time Filter (All, Week, Month) & Selected Tag Filter
-  const now = new Date();
-  const filteredExpenses = state.expenses.filter((e) => {
-    // 1. Tag filter from pie chart
-    if (selectedTagFilter && e.tag !== selectedTagFilter) {
-      return false;
-    }
+  const [appMountTime] = useState(() => Date.now());
 
-    // 2. Time filter
-    if (timeFilter === 'ALL') return true;
-    const expDate = new Date(e.date);
+  const filteredExpenses = useMemo(() => {
+    const now = new Date(appMountTime);
+    const curMonth = now.getMonth();
+    const curYear = now.getFullYear();
+    const oneWeekAgoMs = appMountTime - 7 * 24 * 60 * 60 * 1000;
 
-    if (timeFilter === 'THIS_MONTH') {
-      return (
-        expDate.getMonth() === now.getMonth() &&
-        expDate.getFullYear() === now.getFullYear()
-      );
-    }
+    return state.expenses.filter((e) => {
+      // 1. Tag filter from pie chart
+      if (selectedTagFilter && e.tag !== selectedTagFilter) {
+        return false;
+      }
 
-    if (timeFilter === 'THIS_WEEK') {
-      const oneWeekAgo = new Date();
-      oneWeekAgo.setDate(now.getDate() - 7);
-      return expDate >= oneWeekAgo;
-    }
+      // 2. Time filter
+      if (timeFilter === 'ALL') return true;
+      const expDate = new Date(e.date);
 
-    return true;
-  });
+      if (timeFilter === 'THIS_MONTH') {
+        return (
+          expDate.getMonth() === curMonth &&
+          expDate.getFullYear() === curYear
+        );
+      }
+
+      if (timeFilter === 'THIS_WEEK') {
+        return expDate.getTime() >= oneWeekAgoMs;
+      }
+
+      return true;
+    });
+  }, [state.expenses, selectedTagFilter, timeFilter, appMountTime]);
 
   // Total Group Spend for selected period
   const totalGroupSpend = filteredExpenses.reduce((sum, e) => sum + e.totalAmount, 0);

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { PieChart, BarChart2, X } from 'lucide-react';
 import type { Expense, QuickTag, AppTheme } from '../types';
 
@@ -38,49 +38,68 @@ export const TagSpendingChart: React.FC<TagSpendingChartProps> = ({
   const isPurple = theme === 'purple';
 
   // Total spent across all expenses
-  const totalSpend = expenses.reduce((acc, curr) => acc + (Number(curr.totalAmount) || 0), 0);
-
-  if (expenses.length === 0 || totalSpend === 0) {
-    return null;
-  }
+  const totalSpend = useMemo(() => {
+    return expenses.reduce((acc, curr) => acc + (Number(curr.totalAmount) || 0), 0);
+  }, [expenses]);
 
   // Aggregate spending by tag
-  const tagTotals: Record<string, { total: number; count: number; icon: string }> = {};
+  const sortedCategories = useMemo(() => {
+    if (expenses.length === 0 || totalSpend === 0) return [];
 
-  expenses.forEach((exp) => {
-    const tagName = exp.tag || 'General';
-    if (!tagTotals[tagName]) {
-      const matchedTag = tags.find((t) => t.label === tagName);
-      tagTotals[tagName] = {
-        total: 0,
-        count: 0,
-        icon: matchedTag?.icon || '🏷️',
-      };
-    }
-    tagTotals[tagName].total += Number(exp.totalAmount) || 0;
-    tagTotals[tagName].count += 1;
-  });
+    const tagTotals: Record<string, { total: number; count: number; icon: string }> = {};
 
-  // Convert to sorted array
-  const sortedCategories = Object.entries(tagTotals)
-    .map(([name, data], idx) => {
-      const percentage = (data.total / totalSpend) * 100;
-      return {
-        name,
-        total: data.total,
-        count: data.count,
-        icon: data.icon,
-        percentage,
-        color: TAG_PALETTE[idx % TAG_PALETTE.length],
-      };
-    })
-    .sort((a, b) => b.total - a.total);
+    expenses.forEach((exp) => {
+      const tagName = exp.tag || 'General';
+      if (!tagTotals[tagName]) {
+        const matchedTag = tags.find((t) => t.label === tagName);
+        tagTotals[tagName] = {
+          total: 0,
+          count: 0,
+          icon: matchedTag?.icon || '🏷️',
+        };
+      }
+      tagTotals[tagName].total += Number(exp.totalAmount) || 0;
+      tagTotals[tagName].count += 1;
+    });
+
+    return Object.entries(tagTotals)
+      .map(([name, data], idx) => {
+        const percentage = (data.total / totalSpend) * 100;
+        return {
+          name,
+          total: data.total,
+          count: data.count,
+          icon: data.icon,
+          percentage,
+          color: TAG_PALETTE[idx % TAG_PALETTE.length],
+        };
+      })
+      .sort((a, b) => b.total - a.total);
+  }, [expenses, tags, totalSpend]);
 
   // SVG Donut Calculations
   const radius = 64;
   const strokeWidth = 24;
   const circumference = 2 * Math.PI * radius;
-  let accumulatedOffset = 0;
+
+  // Pre-calculate segment offsets purely to avoid mutation during render
+  const categoriesWithOffsets = useMemo(() => {
+    return sortedCategories.map((cat, idx, arr) => {
+      const strokeDash = (cat.percentage / 100) * circumference;
+      const currentOffset = arr
+        .slice(0, idx)
+        .reduce((sum, c) => sum + (c.percentage / 100) * circumference, 0);
+      return {
+        ...cat,
+        strokeDash,
+        currentOffset,
+      };
+    });
+  }, [sortedCategories, circumference]);
+
+  if (expenses.length === 0 || totalSpend === 0) {
+    return null;
+  }
 
   return (
     <div className="glass-panel rounded-2xl p-5 border border-white/5 space-y-4">
@@ -166,10 +185,7 @@ export const TagSpendingChart: React.FC<TagSpendingChartProps> = ({
                   strokeWidth={strokeWidth}
                 />
                 {/* Segment Arcs */}
-                {sortedCategories.map((cat) => {
-                  const strokeDash = (cat.percentage / 100) * circumference;
-                  const currentOffset = accumulatedOffset;
-                  accumulatedOffset += strokeDash;
+                {categoriesWithOffsets.map((cat) => {
                   const isHovered = hoveredTag === cat.name;
 
                   return (
@@ -181,8 +197,8 @@ export const TagSpendingChart: React.FC<TagSpendingChartProps> = ({
                       fill="transparent"
                       stroke={cat.color}
                       strokeWidth={isHovered ? strokeWidth + 4 : strokeWidth}
-                      strokeDasharray={`${strokeDash} ${circumference - strokeDash}`}
-                      strokeDashoffset={-currentOffset}
+                      strokeDasharray={`${cat.strokeDash} ${circumference - cat.strokeDash}`}
+                      strokeDashoffset={-cat.currentOffset}
                       className="transition-all duration-300 cursor-pointer"
                       onMouseEnter={() => setHoveredTag(cat.name)}
                       onMouseLeave={() => setHoveredTag(null)}

@@ -268,7 +268,7 @@ export function generateExpenseReportPdf(
   currentY += 4;
 
   const spenderRows = Object.entries(spenderTotals)
-    .filter(([_, amt]) => amt > 0)
+    .filter(([, amt]) => amt > 0)
     .sort((a, b) => b[1] - a[1])
     .map(([id, amt]) => {
       const name = memberMap.get(id) || 'Unknown';

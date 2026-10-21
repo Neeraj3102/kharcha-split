@@ -84,7 +84,7 @@ export function createExpenseReportWhatsAppUrl(
 
   // Build Spenders Breakdown
   const spenderLines = Object.entries(spenderTotals)
-    .filter(([_, amt]) => amt > 0)
+    .filter(([, amt]) => amt > 0)
     .sort((a, b) => b[1] - a[1])
     .map(([id, amt]) => {
       const name = memberMap.get(id) || 'Unknown';
