@@ -196,6 +196,12 @@ export function App() {
     activeRoomRef.current = activeRoom;
   }, [activeRoom]);
 
+  // Room Access Approval State (Knock-to-join admin authentication)
+  const [deviceApprovalStatus, setDeviceApprovalStatus] = useState<
+    'APPROVED' | 'PENDING' | 'REJECTED' | 'NONE'
+  >('APPROVED');
+  const [pendingJoinRequests, setPendingJoinRequests] = useState<JoinRequest[]>([]);
+
   // Cleanly disconnect and wipe local cache when a room is purged or doesn't exist
   const handleRoomPurgedDisconnect = useCallback((roomId?: string) => {
     const targetId = roomId || activeRoomRef.current?.roomId;
@@ -210,12 +216,6 @@ export function App() {
     setDeviceApprovalStatus('APPROVED');
     setState(loadInitialState());
   }, []);
-
-  // Room Access Approval State (Knock-to-join admin authentication)
-  const [deviceApprovalStatus, setDeviceApprovalStatus] = useState<
-    'APPROVED' | 'PENDING' | 'REJECTED' | 'NONE'
-  >('APPROVED');
-  const [pendingJoinRequests, setPendingJoinRequests] = useState<JoinRequest[]>([]);
 
   // Monitor device approval status or incoming join requests
   useEffect(() => {
