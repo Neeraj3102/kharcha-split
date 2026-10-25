@@ -12,6 +12,7 @@ import {
   RefreshCw,
   Upload,
   Laptop,
+  Download,
 } from 'lucide-react';
 import type { TimeFilter, AppTheme, UserProfile } from '../types';
 
@@ -25,6 +26,8 @@ interface HeaderProps {
   onOpenRoomManager: () => void;
   onOpenRecurringModal?: () => void;
   onOpenCsvImport?: () => void;
+  canInstall?: boolean;
+  onInstallApp?: () => void;
   activeRoom: { roomId: string; roomName: string } | null;
   totalGroupSpend: number;
   activeMemberCount: number;
@@ -47,6 +50,8 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenRoomManager,
   onOpenRecurringModal,
   onOpenCsvImport,
+  canInstall = false,
+  onInstallApp,
   activeRoom,
   totalGroupSpend,
   activeMemberCount,
@@ -214,6 +219,23 @@ export const Header: React.FC<HeaderProps> = ({
                 </>
               )}
             </button>
+
+            {/* PWA INSTALL / DOWNLOAD APP BUTTON */}
+            {canInstall && onInstallApp && (
+              <button
+                onClick={onInstallApp}
+                className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs font-bold border transition-all cursor-pointer shrink-0 shadow-md ${
+                  isPurple
+                    ? 'bg-purple-600 hover:bg-purple-500 text-white border-purple-400 shadow-purple-950/60'
+                    : 'bg-rose-600 hover:bg-rose-500 text-white border-rose-400 shadow-rose-950/60'
+                }`}
+                title="Download & Install KharchaSplit App"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Install App</span>
+                <span className="sm:hidden">Install</span>
+              </button>
+            )}
           </div>
         </div>
 

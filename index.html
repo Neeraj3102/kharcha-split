@@ -2,13 +2,16 @@
 <html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ff003b'><path d='M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6'/></svg>" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/icon-192.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <meta name="theme-color" content="#08080a" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="KharchaSplit" />
+    <meta name="application-name" content="KharchaSplit" />
     <meta name="format-detection" content="telephone=no" />
     <title>KharchaSplit — Indian Flatmate Expense Splitter & UPI Settle</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -39,13 +42,11 @@
       (function() {
         function removeNetlifyElements() {
           try {
-            // Remove any iframe injected by Netlify
             var iframes = document.querySelectorAll('iframe');
             for (var j = 0; j < iframes.length; j++) {
               iframes[j].remove();
             }
 
-            // Remove any body-level injected overlay other than our React root
             var bodyChildren = document.body ? document.body.children : [];
             for (var k = 0; k < bodyChildren.length; k++) {
               var child = bodyChildren[k];
@@ -59,6 +60,19 @@
         setInterval(removeNetlifyElements, 250);
         window.addEventListener('DOMContentLoaded', removeNetlifyElements);
       })();
+
+      // PWA Service Worker Registration
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+          navigator.serviceWorker.register('/sw.js', { scope: '/' })
+            .then(function(reg) {
+              console.log('KharchaSplit PWA ServiceWorker active:', reg.scope);
+            })
+            .catch(function(err) {
+              console.warn('KharchaSplit PWA ServiceWorker registration failed:', err);
+            });
+        });
+      }
     </script>
   </head>
   <body class="bg-[#08080a] text-zinc-100 min-h-screen selection:bg-rose-500 selection:text-white antialiased overflow-x-hidden">

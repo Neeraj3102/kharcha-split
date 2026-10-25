@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
+  <defs>
+    <linearGradient id="kg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff003b"/>
+      <stop offset="50%" stop-color="#e11d48"/>
+      <stop offset="100%" stop-color="#a855f7"/>
+    </linearGradient>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#14141c"/>
+      <stop offset="100%" stop-color="#08080a"/>
+    </linearGradient>
+  </defs>
+  <!-- Background Card -->
+  <rect width="192" height="192" rx="44" fill="url(#bg)"/>
+  <rect x="2" y="2" width="188" height="188" rx="42" fill="none" stroke="url(#kg)" stroke-width="3" stroke-opacity="0.8"/>
+  
+  <!-- Glowing Center Accent -->
+  <circle cx="96" cy="96" r="48" fill="#ff003b" opacity="0.12"/>
+  
+  <!-- Stylized Indian Rupee Sign with Lightning Slash -->
+  <path d="M64 50h64M64 68h50M64 50v86M64 86h18c14 0 24-8 24-18s-10-18-24-18M92 86l36 50" 
+        stroke="url(#kg)" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  
+  <!-- Lightning Accent Sparkle -->
+  <path d="M128 42l-10 18h16l-8 20" stroke="#facc15" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>

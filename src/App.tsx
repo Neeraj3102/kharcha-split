@@ -71,8 +71,10 @@ import {
   saveNotifications,
   createNotification,
 } from './utils/notifications';
+import { usePwaInstall } from './utils/usePwaInstall';
 
 export function App() {
+  const { canInstall, triggerInstall } = usePwaInstall();
   const [state, setState] = useState<AppState>(loadInitialState);
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('ALL');
 
@@ -835,6 +837,8 @@ export function App() {
         onOpenRoomManager={() => setIsRoomManagerOpen(true)}
         onOpenRecurringModal={() => setIsRecurringOpen(true)}
         onOpenCsvImport={() => setIsCsvImportOpen(true)}
+        canInstall={canInstall}
+        onInstallApp={triggerInstall}
         activeRoom={activeRoom}
         totalGroupSpend={totalGroupSpend}
         activeMemberCount={state.members.length}
