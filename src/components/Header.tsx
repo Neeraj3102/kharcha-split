@@ -1,5 +1,18 @@
 import React from 'react';
-import { Share2, PlusCircle, UserPlus, FileText, Sparkles, Flame, Users, User } from 'lucide-react';
+import {
+  Share2,
+  PlusCircle,
+  UserPlus,
+  FileText,
+  Sparkles,
+  Flame,
+  Users,
+  User,
+  Bell,
+  RefreshCw,
+  Upload,
+  Laptop,
+} from 'lucide-react';
 import type { TimeFilter, AppTheme, UserProfile } from '../types';
 
 interface HeaderProps {
@@ -10,12 +23,16 @@ interface HeaderProps {
   onOpenReport: () => void;
   onOpenShareLedger: () => void;
   onOpenRoomManager: () => void;
+  onOpenRecurringModal?: () => void;
+  onOpenCsvImport?: () => void;
   activeRoom: { roomId: string; roomName: string } | null;
   totalGroupSpend: number;
   activeMemberCount: number;
   theme: AppTheme;
   onToggleTheme: () => void;
   pendingRequestsCount?: number;
+  unreadNotificationsCount?: number;
+  onOpenNotifications?: () => void;
   userProfile?: UserProfile | null;
   onOpenProfile: () => void;
 }
@@ -28,21 +45,26 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenReport,
   onOpenShareLedger,
   onOpenRoomManager,
+  onOpenRecurringModal,
+  onOpenCsvImport,
   activeRoom,
   totalGroupSpend,
   activeMemberCount,
   theme,
   onToggleTheme,
   pendingRequestsCount = 0,
+  unreadNotificationsCount = 0,
+  onOpenNotifications,
   userProfile,
   onOpenProfile,
 }) => {
   const isPurple = theme === 'purple';
+  const isSystem = theme === 'system';
 
   return (
     <header className="relative w-full pt-4 pb-6 border-b border-white/10">
       <div className="max-w-6xl mx-auto px-4 space-y-3">
-        {/* Tier 1: Brand & Context Controls (Room, Profile, Theme) */}
+        {/* Tier 1: Brand & Context Controls (Room, Profile, Notifications, Theme) */}
         <div className="flex items-center justify-between gap-3 pb-3 border-b border-white/5">
           {/* Brand with Responsive Logo */}
           <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 shrink-0">
@@ -89,7 +111,7 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           </div>
 
-          {/* Right: Room Switcher, User Profile & Theme Toggle */}
+          {/* Right: Room Switcher, User Profile, Notifications & Theme Toggle */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             {/* MULTIPLAYER FLAT ROOM SWITCHER BUTTON */}
             <button
@@ -104,14 +126,34 @@ export const Header: React.FC<HeaderProps> = ({
               title="Switch flats or manage shared rooms"
             >
               <Users className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="hidden sm:inline">{activeRoom ? `Flat #${activeRoom.roomId} ⇄` : 'My Flats ⇄'}</span>
-              <span className="sm:hidden text-[11px] font-bold">{activeRoom ? `#${activeRoom.roomId}` : 'Flats'}</span>
+              <span className="hidden sm:inline">
+                {activeRoom ? `Flat #${activeRoom.roomId} ⇄` : 'My Flats ⇄'}
+              </span>
+              <span className="sm:hidden text-[11px] font-bold">
+                {activeRoom ? `#${activeRoom.roomId}` : 'Flats'}
+              </span>
               {pendingRequestsCount > 0 && (
                 <span className="px-1.5 py-0.2 rounded-full bg-amber-500 text-zinc-950 text-[10px] font-extrabold animate-bounce">
                   +{pendingRequestsCount}
                 </span>
               )}
             </button>
+
+            {/* NOTIFICATIONS BELL (K9) */}
+            {onOpenNotifications && (
+              <button
+                onClick={onOpenNotifications}
+                className="relative p-2 rounded-lg bg-zinc-900/80 hover:bg-zinc-800 text-zinc-300 border border-zinc-700/60 transition-all cursor-pointer shrink-0"
+                title="Activity notifications"
+              >
+                <Bell className="w-3.5 h-3.5" />
+                {unreadNotificationsCount > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-600 text-[9px] font-mono font-bold text-white shadow-md animate-pulse">
+                    {unreadNotificationsCount > 9 ? '9+' : unreadNotificationsCount}
+                  </span>
+                )}
+              </button>
+            )}
 
             {/* USER PROFILE BUTTON */}
             <button
@@ -131,7 +173,9 @@ export const Header: React.FC<HeaderProps> = ({
                   >
                     {userProfile.name.charAt(0).toUpperCase()}
                   </div>
-                  <span className="hidden sm:inline max-w-[85px] truncate">{userProfile.name}</span>
+                  <span className="hidden sm:inline max-w-[85px] truncate">
+                    {userProfile.name}
+                  </span>
                 </>
               ) : (
                 <>
@@ -141,17 +185,24 @@ export const Header: React.FC<HeaderProps> = ({
               )}
             </button>
 
-            {/* THEME TOGGLE SWITCHER */}
+            {/* THEME TOGGLE SWITCHER (K4: Supports Crimson / Purple / System) */}
             <button
               onClick={onToggleTheme}
               className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs font-bold border transition-all cursor-pointer shrink-0 ${
-                isPurple
+                isSystem
+                  ? 'bg-zinc-800 text-blue-300 border-blue-500/50 hover:bg-zinc-750'
+                  : isPurple
                   ? 'bg-purple-950/50 text-purple-300 border-purple-700/80 hover:bg-purple-900/50 hover:border-purple-500 shadow-sm'
                   : 'bg-rose-950/40 text-rose-300 border-rose-800/80 hover:bg-rose-900/40'
               }`}
-              title="Toggle between Crimson Dark and Purple themes"
+              title="Cycle theme: Crimson Dark → Purple → System Auto"
             >
-              {isPurple ? (
+              {isSystem ? (
+                <>
+                  <Laptop className="w-3.5 h-3.5 text-blue-400" />
+                  <span className="hidden sm:inline">Auto</span>
+                </>
+              ) : isPurple ? (
                 <>
                   <Sparkles className="w-3.5 h-3.5 text-purple-400 fill-purple-400" />
                   <span className="hidden sm:inline">Purple</span>
@@ -166,7 +217,7 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Tier 2: Action Ribbon (Add Expense, Flatmates, PDF, WhatsApp Report) */}
+        {/* Tier 2: Action Ribbon */}
         <div className="flex items-center justify-between gap-2 overflow-x-auto no-scrollbar py-0.5">
           {/* Primary Operations */}
           <div className="flex items-center gap-2 shrink-0">
@@ -182,6 +233,30 @@ export const Header: React.FC<HeaderProps> = ({
               <PlusCircle className="w-4 h-4" />
               <span>+ Add Expense</span>
             </button>
+
+            {/* RECURRING BILLS SHORTCUT (K5) */}
+            {onOpenRecurringModal && (
+              <button
+                onClick={onOpenRecurringModal}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-zinc-900/80 hover:bg-zinc-800 text-indigo-300 border border-indigo-800/50 transition-all cursor-pointer shrink-0"
+                title="Manage recurring flat bills (Rent, Wi-Fi, Maid)"
+              >
+                <RefreshCw className="w-3.5 h-3.5 text-indigo-400" />
+                <span>Recurring</span>
+              </button>
+            )}
+
+            {/* BULK CSV IMPORT SHORTCUT (K8) */}
+            {onOpenCsvImport && (
+              <button
+                onClick={onOpenCsvImport}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-zinc-900/80 hover:bg-zinc-800 text-zinc-300 border border-zinc-700/60 transition-all cursor-pointer shrink-0"
+                title="Import past expenses from CSV file"
+              >
+                <Upload className="w-3.5 h-3.5 text-zinc-400" />
+                <span className="hidden sm:inline">Import CSV</span>
+              </button>
+            )}
 
             {/* FLATMATE MANAGER */}
             <button

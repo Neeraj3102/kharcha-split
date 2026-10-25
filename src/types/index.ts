@@ -24,6 +24,9 @@ export interface Expense {
   splitType: SplitType;
   splits: SplitDetail[];
   customNote?: string;
+  isRecurring?: boolean;
+  recurrenceFrequency?: 'MONTHLY' | 'WEEKLY';
+  nextDueDate?: string;
 }
 
 export interface Settlement {
@@ -33,6 +36,8 @@ export interface Settlement {
   amount: number;
   isSettled?: boolean;
   settledAt?: string;
+  note?: string;
+  paymentMode?: string;
 }
 
 export interface QuickTag {
@@ -44,13 +49,23 @@ export interface QuickTag {
 
 export type TimeFilter = 'ALL' | 'THIS_WEEK' | 'THIS_MONTH';
 
-export type AppTheme = 'weeknd' | 'purple';
+export type AppTheme = 'weeknd' | 'purple' | 'system';
+
+export interface AppNotification {
+  id: string;
+  title: string;
+  message: string;
+  timestamp: string;
+  read: boolean;
+  type: 'EXPENSE' | 'SETTLEMENT' | 'MEMBER' | 'ROOM' | 'INFO';
+}
 
 export interface AppState {
   members: Member[];
   expenses: Expense[];
   settledTransactions: Settlement[];
   customTags: QuickTag[];
+  notifications?: AppNotification[];
 }
 
 export interface UserProfile {

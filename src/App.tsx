@@ -9,6 +9,7 @@ import type {
   AppState,
   AppTheme,
   UserProfile,
+  AppNotification,
 } from './types';
 import {
   loadInitialState,
@@ -36,7 +37,6 @@ import {
   setMyMemberId,
   isUserRoomAdmin,
   transferRoomAdmin,
-  deleteSettledTransactionFromRoom,
   requestJoinRoom,
   subscribeToDeviceApproval,
   subscribeToJoinRequests,
@@ -62,7 +62,15 @@ import { TagSpendingChart } from './components/TagSpendingChart';
 import { JoinRequestModal } from './components/JoinRequestModal';
 import { UserProfileModal } from './components/UserProfileModal';
 import { TutorialModal } from './components/TutorialModal';
+import { NotificationsModal } from './components/NotificationsModal';
+import { RecurringExpensesModal } from './components/RecurringExpensesModal';
+import { CsvImportModal } from './components/CsvImportModal';
 import { getUserProfile, saveUserProfile } from './utils/userProfile';
+import {
+  getNotifications,
+  saveNotifications,
+  createNotification,
+} from './utils/notifications';
 
 export function App() {
   const [state, setState] = useState<AppState>(loadInitialState);
@@ -74,26 +82,78 @@ export function App() {
   );
   const [copiedRoomLink, setCopiedRoomLink] = useState(false);
 
-  // Changeable Theme (Weeknd vs Purple)
+  // Changeable Theme (Weeknd vs Purple vs System Auto - K4)
   const [theme, setTheme] = useState<AppTheme>(() => {
     try {
       const saved = localStorage.getItem('kharchasplit_theme');
-      if (saved === 'weeknd' || saved === 'purple') return saved;
+      if (saved === 'weeknd' || saved === 'purple' || saved === 'system') {
+        return saved as AppTheme;
+      }
     } catch {
       // ignore
     }
     return 'weeknd';
   });
 
+  // System Dark Mode Listener (K4)
+  const [systemPrefersDark, setSystemPrefersDark] = useState(() => {
+    try {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    } catch {
+      return true;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      const media = window.matchMedia('(prefers-color-scheme: dark)');
+      const listener = (e: MediaQueryListEvent) => setSystemPrefersDark(e.matches);
+      media.addEventListener('change', listener);
+      return () => media.removeEventListener('change', listener);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const effectiveTheme: 'weeknd' | 'purple' = useMemo(() => {
+    if (theme === 'system') {
+      return systemPrefersDark ? 'weeknd' : 'purple';
+    }
+    return theme;
+  }, [theme, systemPrefersDark]);
+
+  // Notifications State (K9)
+  const [notifications, setNotifications] = useState<AppNotification[]>(getNotifications);
+  const unreadNotificationsCount = useMemo(
+    () => notifications.filter((n) => !n.read).length,
+    [notifications]
+  );
+
+  const addNotification = useCallback((title: string, message: string, type: AppNotification['type'] = 'INFO') => {
+    const notif = createNotification(title, message, type);
+    setNotifications((prev) => {
+      const updated = [notif, ...prev].slice(0, 50);
+      saveNotifications(updated);
+      return updated;
+    });
+  }, []);
+
   // Modals state
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [isShareLedgerOpen, setIsShareLedgerOpen] = useState(false);
   const [isRoomManagerOpen, setIsRoomManagerOpen] = useState(false);
   const [isAdminPortalOpen, setIsAdminPortalOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [isRecurringOpen, setIsRecurringOpen] = useState(false);
+  const [isCsvImportOpen, setIsCsvImportOpen] = useState(false);
+
+  // Filters (K2 Member Filter + Tag Filter)
   const [selectedTagFilter, setSelectedTagFilter] = useState<string | null>(null);
+  const [selectedMemberFilter, setSelectedMemberFilter] = useState<string | null>(null);
 
   // New-User Onboarding Tutorial Modal State (Only auto-shows to fresh first-time users)
   const [isTutorialOpen, setIsTutorialOpen] = useState<boolean>(() => {
@@ -101,7 +161,6 @@ export function App() {
       const hasSeen = localStorage.getItem('kharchasplit_tutorial_seen');
       if (hasSeen === 'true') return false;
 
-      // Also check if user has existing members or expenses from prior sessions
       const hasData = localStorage.getItem('kharchasplit_v2_data');
       if (hasData) {
         try {
@@ -114,7 +173,7 @@ export function App() {
           // ignore
         }
       }
-      return true; // Brand-new user!
+      return true;
     } catch {
       return false;
     }
@@ -183,26 +242,26 @@ export function App() {
     setAdminRefreshTick((t) => t + 1);
   };
 
-  // Authority check: Is current user the Room Admin? (Local mode has full admin rights)
+  // Authority check: Is current user the Room Admin?
   const isRoomAdmin = useMemo(() => {
     void adminRefreshTick;
     if (!activeRoom) return true;
     return isUserRoomAdmin(activeRoom.roomId, roomMeta, myMemberId);
   }, [activeRoom, roomMeta, myMemberId, adminRefreshTick]);
 
-  // Active room ref to prevent stale closures during rapid updates
+  // Active room ref to prevent stale closures
   const activeRoomRef = useRef(activeRoom);
   useEffect(() => {
     activeRoomRef.current = activeRoom;
   }, [activeRoom]);
 
-  // Room Access Approval State (Knock-to-join admin authentication)
+  // Room Access Approval State
   const [deviceApprovalStatus, setDeviceApprovalStatus] = useState<
     'APPROVED' | 'PENDING' | 'REJECTED' | 'NONE'
   >('APPROVED');
   const [pendingJoinRequests, setPendingJoinRequests] = useState<JoinRequest[]>([]);
 
-  // Cleanly disconnect and wipe local cache when a room is purged or doesn't exist
+  // Disconnect handler
   const handleRoomPurgedDisconnect = useCallback((roomId?: string) => {
     const targetId = roomId || activeRoomRef.current?.roomId;
     if (targetId) {
@@ -217,7 +276,7 @@ export function App() {
     setState(loadInitialState());
   }, []);
 
-  // Monitor device approval status or incoming join requests
+  // Monitor device approval status
   useEffect(() => {
     if (!activeRoom) {
       setDeviceApprovalStatus('APPROVED');
@@ -225,10 +284,8 @@ export function App() {
       return;
     }
 
-    // Room Admin is always automatically approved
     if (isRoomAdmin) {
       setDeviceApprovalStatus('APPROVED');
-      // Admin listens to incoming join requests
       const unsub = subscribeToJoinRequests(activeRoom.roomId, (reqs) => {
         setPendingJoinRequests(reqs.filter((r) => r.status === 'PENDING'));
       });
@@ -237,14 +294,12 @@ export function App() {
       };
     }
 
-    // Non-admin devices: listen for approval status from the room admin
     const unsubApproval = subscribeToDeviceApproval(
       activeRoom.roomId,
       (status) => {
         setDeviceApprovalStatus(status);
       },
       () => {
-        // Room does not exist or was purged from Firebase!
         handleRoomPurgedDisconnect(activeRoom.roomId);
       }
     );
@@ -254,99 +309,49 @@ export function App() {
     };
   }, [activeRoom, isRoomAdmin, handleRoomPurgedDisconnect]);
 
-  // Open Master Admin Portal or switch room via URL hash e.g. #admin or #room=710
+  // Real-time bidirectional room synchronization with Firestore
   useEffect(() => {
-    const handleHash = () => {
-      const hash = window.location.hash;
-      if (hash.includes('#admin')) {
-        setIsAdminPortalOpen(true);
-      }
-      if (hash.includes('#room=')) {
-        const rawId = hash.split('#room=')[1]?.split('&')[0]?.trim().toUpperCase();
-        if (rawId && (!activeRoomRef.current || activeRoomRef.current.roomId !== rawId)) {
-          setActiveRoom({ roomId: rawId, roomName: `Flat ${rawId}` });
-        }
-      }
-    };
-    handleHash();
-    window.addEventListener('hashchange', handleHash);
-    return () => window.removeEventListener('hashchange', handleHash);
-  }, []);
+    if (!activeRoom) return;
 
-  // LIVE ROOM SYNC: Listen for real-time updates from other flatmates via WebSockets
-  useEffect(() => {
-    setSelectedTagFilter(null);
-    setRoomMeta(null);
-
-    if (!activeRoom) {
-      // Offline local mode
-      setState(loadInitialState());
-      return;
-    }
-
-    // Only sync data if approved or admin
-    if (!isRoomAdmin && deviceApprovalStatus !== 'APPROVED') {
-      setState({
-        members: [],
-        expenses: [],
-        settledTransactions: [],
-        customTags: [],
-      });
-      return;
-    }
-
-    // Clean state while switching/loading room so previous flat's data doesn't cross-contaminate
-    setState({
-      members: [],
-      expenses: [],
-      settledTransactions: [],
-      customTags: [],
-    });
-
-    const unsubscribe = subscribeToRoomState(
+    const unsub = subscribeToRoomState(
       activeRoom.roomId,
-      (remoteState, meta) => {
-        setState(remoteState);
+      (cloudState, meta) => {
+        if (cloudState) {
+          setState(cloudState);
+        }
         if (meta) {
           setRoomMeta(meta);
         }
       },
-      (err) => {
-        console.warn('Realtime cloud sync fallback:', err);
-      },
       () => {
-        // Room was deleted/purged from Firebase or does not exist!
         handleRoomPurgedDisconnect(activeRoom.roomId);
       }
     );
 
     return () => {
-      if (unsubscribe) unsubscribe();
+      if (unsub) unsub();
     };
-  }, [activeRoom, isRoomAdmin, deviceApprovalStatus, handleRoomPurgedDisconnect]);
+  }, [activeRoom, handleRoomPurgedDisconnect]);
 
-  // Discover active cloud rooms for seamless 1-tap joining when opening on a new device (like a phone)
+  // Active Public Cloud Rooms Discovery
   const [discoveredRooms, setDiscoveredRooms] = useState<
-    Array<{ id: string; name: string; memberCount: number; spend: number }>
+    { id: string; name: string; memberCount: number; updatedAt: string }[]
   >([]);
 
   useEffect(() => {
-    if (activeRoom) return;
-
     const unsub = subscribeToAllRooms(
       (allRooms) => {
         const list = Object.entries(allRooms).map(([id, r]) => {
           const members = r.state?.members || [];
-          const expenses = r.state?.expenses || [];
-          const totalSpend = expenses.reduce((sum, e) => sum + (e.totalAmount || 0), 0);
           return {
             id,
             name: r.meta?.name || `Flat ${id}`,
             memberCount: members.length,
-            spend: totalSpend,
+            updatedAt: r.meta?.updatedAt || new Date().toISOString(),
           };
         });
-        setDiscoveredRooms(list);
+        const filtered = list.filter((r) => !activeRoom || r.id !== activeRoom.roomId);
+        setDiscoveredRooms(filtered);
       },
       (err) => {
         console.warn('Discovery rooms error:', err);
@@ -366,10 +371,15 @@ export function App() {
     }
   }, []);
 
-  // Combined Tags: Default Indian Quick Tags + Custom User Tags
+  // Combined Tags
   const allTags: QuickTag[] = [...DEFAULT_INDIAN_TAGS, ...state.customTags];
 
-  // Filtered Expenses by Time Filter (All, Week, Month) & Selected Tag Filter
+  // Recurring expenses list (K5)
+  const recurringExpenses = useMemo(() => {
+    return state.expenses.filter((e) => e.isRecurring);
+  }, [state.expenses]);
+
+  // Filtered Expenses by Time Filter, Selected Tag Filter & Member Filter (K2)
   const [appMountTime] = useState(() => Date.now());
 
   const filteredExpenses = useMemo(() => {
@@ -379,12 +389,19 @@ export function App() {
     const oneWeekAgoMs = appMountTime - 7 * 24 * 60 * 60 * 1000;
 
     return state.expenses.filter((e) => {
-      // 1. Tag filter from pie chart
+      // 1. Tag filter
       if (selectedTagFilter && e.tag !== selectedTagFilter) {
         return false;
       }
 
-      // 2. Time filter
+      // 2. Member filter (K2: filter expenses where member is payer or recipient)
+      if (selectedMemberFilter) {
+        const isPayer = e.paidById === selectedMemberFilter;
+        const isParticipant = e.splits.some((s) => s.memberId === selectedMemberFilter);
+        if (!isPayer && !isParticipant) return false;
+      }
+
+      // 3. Time filter
       if (timeFilter === 'ALL') return true;
       const expDate = new Date(e.date);
 
@@ -401,12 +418,12 @@ export function App() {
 
       return true;
     });
-  }, [state.expenses, selectedTagFilter, timeFilter, appMountTime]);
+  }, [state.expenses, selectedTagFilter, selectedMemberFilter, timeFilter, appMountTime]);
 
   // Total Group Spend for selected period
   const totalGroupSpend = filteredExpenses.reduce((sum, e) => sum + e.totalAmount, 0);
 
-  // Live Balances & Minimized Settlements (Greedy Min-Cash Flow)
+  // Live Balances & Minimized Settlements
   const netBalances = getMemberNetBalances(
     state.members,
     state.expenses,
@@ -419,7 +436,7 @@ export function App() {
     state.settledTransactions
   );
 
-  // Check if any modal is currently open to hide the bottom mobile navigation bar
+  // Check if any modal is currently open
   const isAnyModalOpen =
     isAddExpenseOpen ||
     isAddMemberOpen ||
@@ -429,6 +446,9 @@ export function App() {
     isShareLedgerOpen ||
     isRoomManagerOpen ||
     isAdminPortalOpen ||
+    isNotificationsOpen ||
+    isRecurringOpen ||
+    isCsvImportOpen ||
     qrState.isOpen ||
     !!markPaidSettlement;
 
@@ -437,7 +457,6 @@ export function App() {
     setUserProfile(updatedProfile);
     saveUserProfile(updatedProfile);
 
-    // If user requested to sync their details with their active flatmate member record:
     if (syncWithFlatmateId) {
       const updatedMembers = state.members.map((m) => {
         if (m.id === syncWithFlatmateId) {
@@ -472,6 +491,7 @@ export function App() {
     };
     setState(updated);
     syncToCloud(updated);
+    addNotification('Flatmate Added', `${newMember.name} joined the flat ledger`, 'MEMBER');
   };
 
   const handleDeleteMember = (id: string) => {
@@ -479,6 +499,7 @@ export function App() {
       alert('Authority restricted: Only the Room Admin can remove flatmates.');
       return;
     }
+    const memberName = state.members.find((m) => m.id === id)?.name || 'Flatmate';
     const updated = {
       ...state,
       members: state.members.filter((m) => m.id !== id),
@@ -491,6 +512,7 @@ export function App() {
     };
     setState(updated);
     syncToCloud(updated);
+    addNotification('Flatmate Removed', `${memberName} was removed from the flat`, 'MEMBER');
   };
 
   const handleResetAllData = () => {
@@ -510,24 +532,58 @@ export function App() {
     };
     setState(emptyState);
     syncToCloud(emptyState);
+    addNotification('Ledger Reset', 'The entire flat ledger was cleared', 'INFO');
   };
 
   const handleLoadDemoData = () => {
     setState(DEMO_STATE);
     syncToCloud(DEMO_STATE);
+    addNotification('Demo Loaded', 'Loaded standard demo data', 'INFO');
   };
 
-  const handleAddExpense = (newExpenseData: Omit<Expense, 'id'>) => {
-    const newExpense: Expense = {
-      ...newExpenseData,
-      id: `exp-${Date.now()}`,
-    };
-    const updated = {
-      ...state,
-      expenses: [newExpense, ...state.expenses],
-    };
-    setState(updated);
-    syncToCloud(updated);
+  // Add or Edit Expense Handler (K1)
+  const handleSaveExpense = (newExpenseData: Omit<Expense, 'id'>, existingId?: string) => {
+    if (existingId) {
+      // Edit mode (K1)
+      const updatedExpenses = state.expenses.map((e) => {
+        if (e.id === existingId) {
+          return {
+            ...newExpenseData,
+            id: existingId,
+          };
+        }
+        return e;
+      });
+      const updated = {
+        ...state,
+        expenses: updatedExpenses,
+      };
+      setState(updated);
+      syncToCloud(updated);
+      addNotification(
+        'Expense Updated',
+        `"${newExpenseData.title}" was updated to ₹${newExpenseData.totalAmount}`,
+        'EXPENSE'
+      );
+    } else {
+      // New expense mode
+      const newExpense: Expense = {
+        ...newExpenseData,
+        id: `exp-${Date.now()}`,
+      };
+      const updated = {
+        ...state,
+        expenses: [newExpense, ...state.expenses],
+      };
+      setState(updated);
+      syncToCloud(updated);
+      addNotification(
+        'Expense Recorded',
+        `Added "${newExpense.title}" (₹${newExpense.totalAmount})`,
+        'EXPENSE'
+      );
+    }
+    setEditingExpense(null);
   };
 
   const handleDeleteExpense = (id: string) => {
@@ -535,12 +591,55 @@ export function App() {
       alert('Authority restricted: Only the Room Admin can delete expenses.');
       return;
     }
+    const exp = state.expenses.find((e) => e.id === id);
     const updated = {
       ...state,
       expenses: state.expenses.filter((e) => e.id !== id),
     };
     setState(updated);
     syncToCloud(updated);
+    addNotification('Expense Deleted', `Deleted "${exp?.title || 'Expense'}"`, 'EXPENSE');
+  };
+
+  // 1-Tap Log Recurring Instance (K5)
+  const handleLogRecurringInstance = (recurringExp: Expense) => {
+    const newInstance: Expense = {
+      ...recurringExp,
+      id: `exp-${Date.now()}`,
+      date: new Date().toISOString(),
+      isRecurring: false, // instance is not recurring itself
+    };
+    const updated = {
+      ...state,
+      expenses: [newInstance, ...state.expenses],
+    };
+    setState(updated);
+    syncToCloud(updated);
+    addNotification(
+      'Recurring Bill Logged',
+      `Logged monthly instance for "${recurringExp.title}" (₹${recurringExp.totalAmount})`,
+      'EXPENSE'
+    );
+    setIsRecurringOpen(false);
+  };
+
+  // Bulk CSV Import (K8)
+  const handleImportCsv = (importedExpenses: Omit<Expense, 'id'>[]) => {
+    const newExpenses: Expense[] = importedExpenses.map((exp, idx) => ({
+      ...exp,
+      id: `exp-${Date.now()}-${idx}`,
+    }));
+    const updated = {
+      ...state,
+      expenses: [...newExpenses, ...state.expenses],
+    };
+    setState(updated);
+    syncToCloud(updated);
+    addNotification(
+      'CSV Imported',
+      `Successfully added ${newExpenses.length} expenses from CSV`,
+      'EXPENSE'
+    );
   };
 
   const handleAddCustomTag = (tag: QuickTag) => {
@@ -578,9 +677,8 @@ export function App() {
     setMarkPaidSettlement(settlement);
   };
 
-  // Confirm Settlement (With over-settlement prevention & duplicate suppression to eliminate ghost payment reminders)
+  // Confirm Settlement (K3: Records settlement in history log)
   const handleConfirmSettlement = (settlement: Settlement) => {
-    // 1. Calculate live net balances before this settlement
     const currentBalances = getMemberNetBalances(
       state.members,
       state.expenses,
@@ -591,34 +689,14 @@ export function App() {
     const creditorCredit = Math.max(0, currentBalances[settlement.toMemberId] || 0);
 
     if (debtorDebt < 0.01 || creditorCredit < 0.01) {
-      alert('Notice: This payment is already fully balanced! No remaining debt exists between these flatmates.');
+      alert('Notice: This payment is already fully balanced!');
       return;
     }
 
-    // 2. Prevent over-settlement: Cap amount to the exact remaining debt
     const cappedAmount = Math.min(settlement.amount, debtorDebt, creditorCredit);
     const roundedAmount = Math.round(cappedAmount * 100) / 100;
 
-    if (roundedAmount < 0.01) {
-      return;
-    }
-
-    // 3. Deduplication check: ignore if the exact same payment was recorded in the last 15 seconds
-    const now = Date.now();
-    const isDuplicate = state.settledTransactions.some((s) => {
-      if (s.fromMemberId === settlement.fromMemberId && s.toMemberId === settlement.toMemberId) {
-        if (Math.abs(s.amount - roundedAmount) < 0.01) {
-          const settledTime = s.settledAt ? new Date(s.settledAt).getTime() : 0;
-          return now - settledTime < 15000;
-        }
-      }
-      return false;
-    });
-
-    if (isDuplicate) {
-      console.log('Prevented duplicate settlement submission within 15 seconds.');
-      return;
-    }
+    if (roundedAmount < 0.01) return;
 
     const newSettledRecord: Settlement = {
       ...settlement,
@@ -628,15 +706,23 @@ export function App() {
       settledAt: new Date().toISOString(),
     };
 
+    const fromName = state.members.find((m) => m.id === settlement.fromMemberId)?.name || 'Someone';
+    const toName = state.members.find((m) => m.id === settlement.toMemberId)?.name || 'Someone';
+
     const updated = {
       ...state,
       settledTransactions: [...state.settledTransactions, newSettledRecord],
     };
     setState(updated);
     syncToCloud(updated);
+    addNotification(
+      'Settlement Confirmed',
+      `${fromName} paid ₹${roundedAmount} to ${toName}`,
+      'SETTLEMENT'
+    );
   };
 
-  // Delete / Undo a settled payment (Room Admin only)
+  // Delete / Undo a settled payment
   const handleDeleteSettledTransaction = async (transactionId: string) => {
     if (activeRoom && !isRoomAdmin) {
       alert('Authority restricted: Only the Room Admin can undo settled records.');
@@ -648,15 +734,12 @@ export function App() {
     };
     setState(updated);
     syncToCloud(updated);
-
-    if (activeRoom) {
-      await deleteSettledTransactionFromRoom(activeRoom.roomId, transactionId);
-    }
+    addNotification('Settlement Undone', 'A settlement was undone and balances restored', 'SETTLEMENT');
   };
 
-  // Transfer Room Admin powers to another flatmate
+  // Transfer Admin Role
   const handleTransferAdmin = async (newMemberId: string, newMemberName: string) => {
-    if (!activeRoom) return;
+    if (!activeRoom || !isRoomAdmin) return;
     const ok = await transferRoomAdmin(activeRoom.roomId, newMemberId, newMemberName);
     if (ok) {
       setRoomMeta((prev) =>
@@ -669,10 +752,11 @@ export function App() {
           : null
       );
       setAdminRefreshTick((t) => t + 1);
+      addNotification('Admin Transferred', `Room admin rights were given to ${newMemberName}`, 'ROOM');
     }
   };
 
-  // Join Requests Handlers (Knock-to-join admin authentication)
+  // Join Requests Handlers
   const handleRequestJoin = async (name: string, phone?: string) => {
     if (!activeRoom) return;
     await requestJoinRoom(activeRoom.roomId, name, phone);
@@ -687,7 +771,6 @@ export function App() {
     if (!activeRoom) return;
     await approveJoinRequest(activeRoom.roomId, requestId, deviceId, name);
 
-    // If new flatmate is not in members yet, automatically add them to the flat
     if (!state.members.some((m) => m.name.toLowerCase() === name.toLowerCase())) {
       const AVATAR_COLORS = ['#ff003b', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4', '#10b981'];
       handleAddMember({
@@ -714,8 +797,13 @@ export function App() {
     return false;
   };
 
+  // Toggle Theme: Cycles Crimson -> Purple -> System (K4)
   const toggleTheme = () => {
-    setTheme((prev) => (prev === 'weeknd' ? 'purple' : 'weeknd'));
+    setTheme((prev) => {
+      if (prev === 'weeknd') return 'purple';
+      if (prev === 'purple') return 'system';
+      return 'weeknd';
+    });
   };
 
   const handleCopyRoomInvite = () => {
@@ -727,25 +815,34 @@ export function App() {
   };
 
   const liveShareUrl = compressStateToUrl(state);
-  const isPurple = theme === 'purple';
+  const isPurple = effectiveTheme === 'purple';
 
   return (
-    <div className={`min-h-screen bg-[#08080a] bg-app-grid text-zinc-100 flex flex-col font-sans theme-${theme}`}>
+    <div
+      className={`min-h-screen bg-[#08080a] bg-app-grid text-zinc-100 flex flex-col font-sans theme-${effectiveTheme}`}
+    >
       {/* Header with theme switcher, stats & actions */}
       <Header
         timeFilter={timeFilter}
         setTimeFilter={setTimeFilter}
-        onOpenAddExpense={() => setIsAddExpenseOpen(true)}
+        onOpenAddExpense={() => {
+          setEditingExpense(null);
+          setIsAddExpenseOpen(true);
+        }}
         onOpenAddMember={() => setIsAddMemberOpen(true)}
         onOpenReport={() => setIsReportOpen(true)}
         onOpenShareLedger={() => setIsShareLedgerOpen(true)}
         onOpenRoomManager={() => setIsRoomManagerOpen(true)}
+        onOpenRecurringModal={() => setIsRecurringOpen(true)}
+        onOpenCsvImport={() => setIsCsvImportOpen(true)}
         activeRoom={activeRoom}
         totalGroupSpend={totalGroupSpend}
         activeMemberCount={state.members.length}
         theme={theme}
         onToggleTheme={toggleTheme}
         pendingRequestsCount={pendingJoinRequests.length}
+        unreadNotificationsCount={unreadNotificationsCount}
+        onOpenNotifications={() => setIsNotificationsOpen(true)}
         userProfile={userProfile}
         onOpenProfile={() => setIsProfileOpen(true)}
       />
@@ -762,40 +859,31 @@ export function App() {
             </div>
             <button
               onClick={() => setIsRoomManagerOpen(true)}
-              className="px-3 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs transition-all cursor-pointer shrink-0 shadow-sm"
+              className="px-3 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs shrink-0 cursor-pointer"
             >
-              Review & Accept
+              Review Requests
             </button>
           </div>
         </div>
       )}
 
-      {/* Real-time Flat Room Status Banner */}
-      <div className="max-w-6xl w-full mx-auto px-4 pt-4">
+      {/* Subheader: Active Room indicator */}
+      <div className="max-w-6xl w-full mx-auto px-4 pt-3">
         {activeRoom ? (
-          <div className="glass-panel rounded-xl px-4 py-2.5 flex items-center justify-between gap-3 border border-emerald-900/50 bg-emerald-950/20">
-            <div className="flex items-center gap-2 text-xs">
-              <span className="relative flex h-2.5 w-2.5">
+          <div className="glass-panel rounded-xl p-3 sm:p-3.5 border border-emerald-900/50 bg-emerald-950/20 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
+            <div className="flex items-center gap-2 text-emerald-400">
+              <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
               </span>
-              <span className="text-zinc-300">
-                Connected to <strong className="text-white">{activeRoom.roomName}</strong> (Code:{' '}
-                <span className="font-mono text-emerald-400 font-bold">#{activeRoom.roomId}</span>)
+              <span>
+                Live Cloud Room:{' '}
+                <strong className="text-white font-heading">{activeRoom.roomName}</strong>{' '}
+                <span className="font-mono text-zinc-400 font-bold">#{activeRoom.roomId}</span>
               </span>
-              {isRoomAdmin ? (
-                <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-bold flex items-center gap-1">
-                  👑 Room Admin
-                </span>
-              ) : (
-                <span className="px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400 border border-zinc-700 text-[10px] font-semibold flex items-center gap-1">
-                  👤 Member (Add & Settle)
-                </span>
-              )}
-              <span className="text-zinc-500 hidden sm:inline">• Live sync active</span>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <button
                 onClick={handleCopyRoomInvite}
                 className="px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border border-zinc-700 text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer"
@@ -918,7 +1006,7 @@ export function App() {
           </div>
         ) : (
           <>
-            {/* Section 1: Minimized Settlement Cards with UPI & QR */}
+            {/* Section 1: Minimized Settlement Cards with UPI & QR & Settlement History (K3) */}
             <section>
               <SettlementCards
                 settlements={settlements}
@@ -930,31 +1018,38 @@ export function App() {
                 onOpenMarkPaid={handleOpenMarkPaid}
                 onDeleteSettledTransaction={handleDeleteSettledTransaction}
                 onSetMyMemberId={handleSetMyMemberId}
-                theme={theme}
+                theme={effectiveTheme}
               />
             </section>
 
-            {/* Section 2: Spending by Category / Tag (Pie / Donut Chart & Breakdown) */}
+            {/* Section 2: Spending by Category & Per Flatmate Breakdown (K6) */}
             {state.expenses.length > 0 && (
               <section>
                 <TagSpendingChart
                   expenses={state.expenses}
                   tags={allTags}
-                  theme={theme}
+                  members={state.members}
+                  theme={effectiveTheme}
                   selectedTagFilter={selectedTagFilter}
                   onSelectTagFilter={setSelectedTagFilter}
                 />
               </section>
             )}
 
-            {/* Section 3: Chronological Filterable Expense Feed */}
+            {/* Section 3: Chronological Filterable Expense Feed (K1, K2, K5, K7) */}
             <section>
               <ExpenseList
                 expenses={filteredExpenses}
                 members={state.members}
                 onDeleteExpense={handleDeleteExpense}
+                onEditExpense={(exp) => {
+                  setEditingExpense(exp);
+                  setIsAddExpenseOpen(true);
+                }}
+                selectedMemberId={selectedMemberFilter}
+                onSelectMemberId={setSelectedMemberFilter}
                 isRoomAdmin={isRoomAdmin}
-                theme={theme}
+                theme={effectiveTheme}
               />
             </section>
           </>
@@ -992,11 +1087,13 @@ export function App() {
         </div>
       </footer>
 
-      {/* MOBILE STICKY BOTTOM NAVIGATION BAR (Thumb Friendly on iOS & Android) - ONLY VISIBLE WHEN NO MODAL IS ACTIVE */}
+      {/* Mobile Sticky Navigation */}
       {!isAnyModalOpen && (
-        <nav aria-label="Mobile Navigation" className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#0d0d12]/95 backdrop-blur-xl border-t border-white/10 px-3 py-2 pb-safe shadow-[0_-4px_24px_rgba(0,0,0,0.7)]">
+        <nav
+          aria-label="Mobile Navigation"
+          className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#0d0d12]/95 backdrop-blur-xl border-t border-white/10 px-3 py-2 pb-safe shadow-[0_-4px_24px_rgba(0,0,0,0.7)]"
+        >
           <div className="flex items-center justify-around gap-1 max-w-md mx-auto">
-            {/* 1. Flat Room */}
             <button
               onClick={() => setIsRoomManagerOpen(true)}
               className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all cursor-pointer ${
@@ -1011,7 +1108,6 @@ export function App() {
               </span>
             </button>
 
-            {/* 2. Flatmates */}
             <button
               onClick={() => setIsAddMemberOpen(true)}
               className="flex flex-col items-center justify-center py-1 px-2.5 rounded-xl text-zinc-400 hover:text-white transition-all cursor-pointer relative"
@@ -1022,9 +1118,11 @@ export function App() {
               </span>
             </button>
 
-            {/* 3. Center CTA: + Add Expense */}
             <button
-              onClick={() => setIsAddExpenseOpen(true)}
+              onClick={() => {
+                setEditingExpense(null);
+                setIsAddExpenseOpen(true);
+              }}
               className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-extrabold shadow-lg transition-all cursor-pointer active:scale-95 ${
                 isPurple
                   ? 'bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-600 text-white shadow-purple-950/80'
@@ -1035,7 +1133,6 @@ export function App() {
               <span>Expense</span>
             </button>
 
-            {/* 4. WhatsApp / Export Report */}
             <button
               onClick={() => setIsReportOpen(true)}
               className="flex flex-col items-center justify-center py-1 px-2 rounded-xl text-zinc-400 hover:text-white transition-all cursor-pointer"
@@ -1044,7 +1141,6 @@ export function App() {
               <span className="text-[10px] font-medium mt-0.5">Report</span>
             </button>
 
-            {/* 5. User Profile */}
             <button
               onClick={() => setIsProfileOpen(true)}
               className="flex flex-col items-center justify-center py-1 px-2 rounded-xl text-zinc-400 hover:text-white transition-all cursor-pointer"
@@ -1068,16 +1164,22 @@ export function App() {
       )}
 
       {/* MODALS */}
+      {/* 1. Add / Edit Expense Modal (K1, K5) */}
       <AddExpenseModal
         isOpen={isAddExpenseOpen}
-        onClose={() => setIsAddExpenseOpen(false)}
+        onClose={() => {
+          setIsAddExpenseOpen(false);
+          setEditingExpense(null);
+        }}
         members={state.members}
         tags={allTags}
         onAddCustomTag={handleAddCustomTag}
-        onSaveExpense={handleAddExpense}
-        theme={theme}
+        onSaveExpense={handleSaveExpense}
+        editingExpense={editingExpense}
+        theme={effectiveTheme}
       />
 
+      {/* 2. Flatmate Manager */}
       <MemberManager
         isOpen={isAddMemberOpen}
         onClose={() => setIsAddMemberOpen(false)}
@@ -1093,9 +1195,51 @@ export function App() {
         onTransferAdmin={handleTransferAdmin}
         adminMemberId={roomMeta?.adminMemberId}
         adminMemberName={roomMeta?.adminMemberName}
-        theme={theme}
+        theme={effectiveTheme}
       />
 
+      {/* 3. Notifications Modal (K9) */}
+      <NotificationsModal
+        isOpen={isNotificationsOpen}
+        onClose={() => setIsNotificationsOpen(false)}
+        notifications={notifications}
+        onMarkAllAsRead={() => {
+          const marked = notifications.map((n) => ({ ...n, read: true }));
+          setNotifications(marked);
+          saveNotifications(marked);
+        }}
+        onClearAll={() => {
+          setNotifications([]);
+          saveNotifications([]);
+        }}
+        theme={effectiveTheme}
+      />
+
+      {/* 4. Recurring Bills Modal (K5) */}
+      <RecurringExpensesModal
+        isOpen={isRecurringOpen}
+        onClose={() => setIsRecurringOpen(false)}
+        recurringExpenses={recurringExpenses}
+        members={state.members}
+        onLogRecurringInstance={handleLogRecurringInstance}
+        onOpenAddExpense={() => {
+          setEditingExpense(null);
+          setIsAddExpenseOpen(true);
+        }}
+        theme={effectiveTheme}
+      />
+
+      {/* 5. Bulk CSV Import Modal (K8) */}
+      <CsvImportModal
+        isOpen={isCsvImportOpen}
+        onClose={() => setIsCsvImportOpen(false)}
+        members={state.members}
+        tags={allTags}
+        onImportExpenses={handleImportCsv}
+        theme={effectiveTheme}
+      />
+
+      {/* 6. UPI QR Modal */}
       <QRCodeModal
         isOpen={qrState.isOpen}
         onClose={() => setQrState((prev) => ({ ...prev, isOpen: false }))}
@@ -1104,42 +1248,46 @@ export function App() {
         toName={qrState.toName}
         toUpiId={qrState.toUpiId}
         amount={qrState.amount}
-        theme={theme}
+        theme={effectiveTheme}
       />
 
+      {/* 7. Mark Paid Settlement Modal (K3) */}
       <MarkPaidModal
         isOpen={!!markPaidSettlement}
         onClose={() => setMarkPaidSettlement(null)}
         settlement={markPaidSettlement}
         members={state.members}
         onConfirmSettlement={handleConfirmSettlement}
-        theme={theme}
+        theme={effectiveTheme}
       />
 
+      {/* 8. WhatsApp Report Modal */}
       <ReportModal
         isOpen={isReportOpen}
         onClose={() => setIsReportOpen(false)}
         expenses={state.expenses}
         members={state.members}
         shareableUrl={liveShareUrl}
-        theme={theme}
+        theme={effectiveTheme}
       />
 
+      {/* 9. Share Ledger / PDF Modal */}
       <ShareLedgerModal
         isOpen={isShareLedgerOpen}
         onClose={() => setIsShareLedgerOpen(false)}
         state={state}
-        theme={theme}
+        theme={effectiveTheme}
         shareableUrl={liveShareUrl}
       />
 
+      {/* 10. Room Manager Modal */}
       <RoomManagerModal
         isOpen={isRoomManagerOpen}
         onClose={() => setIsRoomManagerOpen(false)}
         activeRoom={activeRoom}
         setActiveRoom={setActiveRoom}
         state={state}
-        theme={theme}
+        theme={effectiveTheme}
         isRoomAdmin={isRoomAdmin}
         roomMeta={roomMeta}
         myMemberId={myMemberId}
@@ -1150,7 +1298,7 @@ export function App() {
         onRejectJoinRequest={handleRejectJoinRequest}
       />
 
-      {/* User Profile Modal */}
+      {/* 11. User Profile Modal */}
       <UserProfileModal
         isOpen={isProfileOpen}
         onClose={() => setIsProfileOpen(false)}
@@ -1163,18 +1311,18 @@ export function App() {
         isRoomAdmin={isRoomAdmin}
         netBalances={netBalances}
         expenses={state.expenses}
-        theme={theme}
+        theme={effectiveTheme}
         onOpenTutorial={() => setIsTutorialOpen(true)}
       />
 
-      {/* New User Onboarding Tutorial Modal */}
+      {/* 12. Onboarding Tutorial */}
       <TutorialModal
         isOpen={isTutorialOpen}
         onClose={() => setIsTutorialOpen(false)}
-        theme={theme}
+        theme={effectiveTheme}
       />
 
-      {/* Knock-to-Join Admin Authentication Modal for Non-Approved Devices */}
+      {/* 13. Knock-to-Join Admin Modal */}
       {activeRoom && !isRoomAdmin && deviceApprovalStatus !== 'APPROVED' && (
         <JoinRequestModal
           isOpen={true}
@@ -1189,10 +1337,11 @@ export function App() {
             setDeviceApprovalStatus('APPROVED');
           }}
           onClaimAdmin={handleClaimAdminFromModal}
-          theme={theme}
+          theme={effectiveTheme}
         />
       )}
 
+      {/* 14. Super-Admin Portal */}
       <AdminPortalModal
         isOpen={isAdminPortalOpen}
         onClose={() => {
@@ -1201,7 +1350,7 @@ export function App() {
             window.history.replaceState(null, '', window.location.pathname);
           }
         }}
-        theme={theme}
+        theme={effectiveTheme}
         onSwitchToRoom={(roomId, roomName) => {
           setActiveRoom({ roomId, roomName });
         }}
