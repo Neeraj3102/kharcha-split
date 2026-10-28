@@ -37,28 +37,28 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
   const STEPS = [
     // ── Step 1 ── Welcome
     {
-      badge: 'Step 1 of 8',
+      badge: 'Step 1 of 8 • The Concept',
       title: 'Welcome to KharchaSplit 🏠',
-      subtitle: 'Your smart flatmate & hostel expense ledger — made for India.',
+      subtitle: 'Your smart flatmate & hostel expense ledger — made for Indian shared living.',
       icon: <Building2 className="w-8 h-8 text-rose-500" />,
       iconBg: isPurple
-        ? 'bg-purple-500/10 border-purple-500/30'
-        : 'bg-rose-500/10 border-rose-500/30',
+        ? 'bg-purple-500/15 border-purple-500/30'
+        : 'bg-rose-500/15 border-rose-500/30',
       points: [
         {
           emoji: '🤯',
           title: 'The Flatmate Problem',
-          desc: 'Wi-Fi bill, maid salary, Zepto groceries, LPG cylinder — who paid what? Who owes how much? It gets messy fast.',
+          desc: 'Wi-Fi bills, maid salary, Zepto groceries, LPG cylinder — who paid what? Who owes how much? It gets messy and confusing fast.',
         },
         {
           emoji: '⚖️',
           title: 'Zero Maths, Zero Awkward Chats',
-          desc: 'KharchaSplit tracks every expense and tells you exactly who owes ₹ to whom. No calculator. No WhatsApp arguments.',
+          desc: 'KharchaSplit tracks every expense and tells you exactly who owes ₹ to whom. No manual calculator math. No awkward WhatsApp reminders.',
         },
         {
           emoji: '📱',
-          title: 'Works on Phone, No App Install',
-          desc: 'Open in your browser and it works immediately. Works offline too. Tap "Install" on the share menu to pin it to your home screen.',
+          title: 'Works Instantly on Any Phone',
+          desc: 'Open the link in any mobile browser. It works offline too. Tap "Install" on your browser menu to add it like a native app.',
         },
       ],
       example: null,
@@ -66,48 +66,48 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
 
     // ── Step 2 ── Add Flatmates
     {
-      badge: 'Step 2 of 8',
+      badge: 'Step 2 of 8 • Flatmates',
       title: 'Add Your Flatmates 👥',
-      subtitle: 'Start by adding everyone who lives with you. You only need their name and UPI ID.',
+      subtitle: 'Start by adding everyone living in the flat. You only need their Name and UPI ID.',
       icon: <Users className="w-8 h-8 text-amber-400" />,
-      iconBg: 'bg-amber-500/10 border-amber-500/30',
+      iconBg: 'bg-amber-500/15 border-amber-500/30',
       points: [
         {
           emoji: '🔤',
-          title: 'Name',
-          desc: 'First names work great — Aman, Rohit, Priya, Kavya. Each person gets a unique colour avatar.',
+          title: 'Name & Color Avatar',
+          desc: 'First names work great — Aman, Rohit, Priya, Kavya. Each person gets a distinct color badge.',
         },
         {
           emoji: '💳',
           title: 'UPI ID (find it in GPay / PhonePe)',
-          desc: 'Open GPay → tap your photo → "UPI IDs". It looks like aman@okaxis or 9876543210@ybl. It\'s needed to generate a 1-tap payment link.',
+          desc: 'Open Google Pay or PhonePe → tap your profile photo → "UPI IDs". It looks like aman@okaxis or 9876543210@ybl. Needed for 1-tap payments.',
         },
         {
           emoji: '📞',
-          title: 'Phone Number (optional)',
-          desc: 'Only needed if you want to send a WhatsApp settlement receipt to that person after they pay.',
+          title: 'Phone Number (Optional)',
+          desc: 'Enter mobile number if you want to send automatic WhatsApp payment receipts upon settlement.',
         },
       ],
       example: (
-        <div className="rounded-xl bg-zinc-950 border border-white/8 overflow-hidden text-[11px] font-mono">
-          <div className="px-3 py-1.5 bg-white/5 text-zinc-500 text-[10px] uppercase tracking-wider font-sans">
-            Example — Flat: KORA-402
+        <div className="rounded-xl bg-zinc-950 border border-white/10 overflow-hidden text-xs font-mono">
+          <div className="px-3.5 py-2 bg-white/5 text-zinc-300 text-xs uppercase tracking-wider font-sans font-bold">
+            Example Flat Roster — #KORA-402
           </div>
           {[
             { color: '#ff003b', name: 'Aman', upi: 'aman@okaxis' },
             { color: '#f59e0b', name: 'Rohit', upi: 'rohit@ybl' },
             { color: '#8b5cf6', name: 'Priya', upi: 'priya@paytm' },
           ].map((m) => (
-            <div key={m.name} className="flex items-center gap-2.5 px-3 py-2 border-b border-white/5 last:border-0">
+            <div key={m.name} className="flex items-center gap-3 px-3.5 py-2.5 border-b border-white/5 last:border-0">
               <div
-                className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0"
+                className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 shadow"
                 style={{ backgroundColor: m.color }}
               >
                 {m.name[0]}
               </div>
-              <span className="text-white font-sans font-semibold">{m.name}</span>
-              <span className="text-zinc-500 ml-auto">{m.upi}</span>
-              <span className="text-emerald-400">✓</span>
+              <span className="text-white font-sans font-semibold text-sm">{m.name}</span>
+              <span className="text-zinc-300 ml-auto font-mono text-xs">{m.upi}</span>
+              <span className="text-emerald-400 font-bold ml-1">✓</span>
             </div>
           ))}
         </div>
@@ -116,57 +116,57 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
 
     // ── Step 3 ── Log an Expense
     {
-      badge: 'Step 3 of 8',
+      badge: 'Step 3 of 8 • Expenses',
       title: 'Log a Shared Expense 💸',
-      subtitle: 'Someone paid for groceries? Log it in 20 seconds.',
+      subtitle: 'Someone paid for milk, water, or dinner? Log it in just 20 seconds.',
       icon: <FileText className="w-8 h-8 text-sky-400" />,
-      iconBg: 'bg-sky-500/10 border-sky-500/30',
+      iconBg: 'bg-sky-500/15 border-sky-500/30',
       points: [
         {
           emoji: '📝',
-          title: 'Title + Amount',
-          desc: 'Write what it was (e.g. "Zepto Grocery Run") and the full bill amount (e.g. ₹840).',
+          title: 'Title & Amount',
+          desc: 'Enter what it was (e.g., "Zepto Grocery Run") and the total bill amount (e.g., ₹840).',
         },
         {
           emoji: '🙋',
           title: 'Who Paid?',
-          desc: 'Select the person who physically paid the bill. Their balance will be adjusted automatically.',
+          desc: 'Select the roommate who paid the bill. Their positive credit balance is automatically updated.',
         },
         {
           emoji: '➕',
-          title: 'Where is the button?',
-          desc: 'Look for the blue "+ Add Expense" button in the top header bar of the app.',
+          title: 'Quick 1-Tap Access',
+          desc: 'Look for the bright "+ Add Expense" button in the top header on both mobile and desktop.',
         },
       ],
       example: (
-        <div className="rounded-xl bg-zinc-950 border border-white/8 overflow-hidden text-[11px]">
-          <div className="px-3 py-1.5 bg-white/5 text-zinc-500 text-[10px] uppercase tracking-wider">
-            Example Expense
+        <div className="rounded-xl bg-zinc-950 border border-white/10 overflow-hidden text-xs">
+          <div className="px-3.5 py-2 bg-white/5 text-zinc-300 text-xs uppercase tracking-wider font-bold">
+            Live Expense Card Preview
           </div>
-          <div className="px-3 py-2.5 space-y-1.5">
-            <div className="flex justify-between">
-              <span className="text-zinc-400">Title</span>
-              <span className="text-white font-semibold">Zepto Grocery Run</span>
+          <div className="px-4 py-3 space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="text-zinc-300 font-medium">Title</span>
+              <span className="text-white font-bold text-sm">Zepto Grocery Run</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-zinc-400">Amount</span>
-              <span className="text-emerald-400 font-bold">₹840</span>
+            <div className="flex justify-between items-center">
+              <span className="text-zinc-300 font-medium">Total Bill</span>
+              <span className="text-emerald-400 font-extrabold text-base">₹840</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-zinc-400">Paid by</span>
-              <span className="text-white">🟡 Aman</span>
+            <div className="flex justify-between items-center">
+              <span className="text-zinc-300 font-medium">Paid by</span>
+              <span className="text-white font-semibold">🟡 Aman</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-zinc-400">Tag</span>
-              <span className="text-white">🛒 Zepto / Blinkit</span>
+            <div className="flex justify-between items-center">
+              <span className="text-zinc-300 font-medium">Category Tag</span>
+              <span className="text-amber-300 font-semibold bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded">🛒 Zepto / Blinkit</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-zinc-400">Split</span>
-              <span className="text-white">Equal — 3 people</span>
+            <div className="flex justify-between items-center">
+              <span className="text-zinc-300 font-medium">Split Rule</span>
+              <span className="text-white">Split Equally (3 people)</span>
             </div>
-            <div className="pt-1 mt-1 border-t border-white/8 text-center text-zinc-500">
-              Each person owes&nbsp;
-              <span className="text-amber-400 font-bold">₹280</span>
+            <div className="pt-2 mt-1 border-t border-white/10 text-center text-zinc-300 text-xs">
+              Each flatmate owes&nbsp;
+              <span className="text-amber-400 font-extrabold text-sm">₹280</span>
             </div>
           </div>
         </div>
@@ -175,60 +175,60 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
 
     // ── Step 4 ── Equal vs Custom Split
     {
-      badge: 'Step 4 of 8',
+      badge: 'Step 4 of 8 • Splitting',
       title: 'Equal vs Custom Split ⚖️',
-      subtitle: 'Not everyone ordered the same? Custom splits handle that.',
+      subtitle: 'Different consumption? Custom splits let you adjust exact rupee shares.',
       icon: <Zap className="w-8 h-8 text-yellow-400" />,
-      iconBg: 'bg-yellow-500/10 border-yellow-500/30',
+      iconBg: 'bg-yellow-500/15 border-yellow-500/30',
       points: [
         {
           emoji: '🟢',
-          title: 'Equal Split (default)',
-          desc: 'Divides the total evenly across all or selected flatmates. Rounding is handled automatically — no penny gets lost.',
+          title: 'Equal Split (Default)',
+          desc: 'Divides the bill evenly. Rounding odd paise is handled automatically so total balances always match.',
         },
         {
           emoji: '🎛️',
           title: 'Custom Split',
-          desc: 'Enter a specific rupee amount per person. Perfect when someone skipped a meal, ordered extra, or a bill has different consumptions.',
+          desc: 'Enter an exact rupee amount per person. Ideal when someone ordered beer or skipped eating.',
         },
         {
           emoji: '📋',
-          title: 'Per-person notes',
-          desc: 'In Custom mode you can add a note per person — e.g. "Ordered 2 beers" or "Skipped dessert" — so everyone knows why.',
+          title: 'Itemized Notes Per Person',
+          desc: 'Add custom notes per roommate (e.g., "ordered chicken", "skipped dessert") to keep full transparency.',
         },
       ],
       example: (
-        <div className="rounded-xl bg-zinc-950 border border-white/8 overflow-hidden text-[11px]">
-          <div className="grid grid-cols-2 divide-x divide-white/8">
+        <div className="rounded-xl bg-zinc-950 border border-white/10 overflow-hidden text-xs">
+          <div className="grid grid-cols-2 divide-x divide-white/10">
             <div>
-              <div className="px-3 py-1.5 bg-emerald-500/10 text-emerald-400 text-[10px] uppercase tracking-wider text-center">
+              <div className="px-3 py-2 bg-emerald-500/15 text-emerald-300 text-xs uppercase tracking-wider text-center font-bold">
                 Equal Split
               </div>
-              <div className="px-3 py-2 space-y-1">
+              <div className="px-3.5 py-2.5 space-y-1.5">
                 {[['Aman', '₹280'], ['Rohit', '₹280'], ['Priya', '₹280']].map(([n, a]) => (
                   <div key={n} className="flex justify-between">
-                    <span className="text-zinc-400">{n}</span>
-                    <span className="text-white">{a}</span>
+                    <span className="text-zinc-300">{n}</span>
+                    <span className="text-white font-semibold">{a}</span>
                   </div>
                 ))}
               </div>
             </div>
             <div>
-              <div className="px-3 py-1.5 bg-amber-500/10 text-amber-400 text-[10px] uppercase tracking-wider text-center">
+              <div className="px-3 py-2 bg-amber-500/15 text-amber-300 text-xs uppercase tracking-wider text-center font-bold">
                 Custom Split
               </div>
-              <div className="px-3 py-2 space-y-1">
+              <div className="px-3.5 py-2.5 space-y-1.5">
                 {[['Aman', '₹400'], ['Rohit', '₹240'], ['Priya', '₹200']].map(([n, a]) => (
                   <div key={n} className="flex justify-between">
-                    <span className="text-zinc-400">{n}</span>
-                    <span className="text-white">{a}</span>
+                    <span className="text-zinc-300">{n}</span>
+                    <span className="text-white font-semibold">{a}</span>
                   </div>
                 ))}
               </div>
             </div>
           </div>
-          <div className="px-3 py-1.5 border-t border-white/8 text-center text-zinc-500 text-[10px]">
-            Both total ₹840 · Rounding handled automatically
+          <div className="px-3 py-2 border-t border-white/10 text-center text-zinc-300 text-xs font-medium">
+            Both total ₹840 • Perfectly verified math
           </div>
         </div>
       ),
@@ -236,102 +236,108 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
 
     // ── Step 5 ── Tags
     {
-      badge: 'Step 5 of 8',
-      title: 'Category Tags 🏷️',
-      subtitle: 'Tags help you see where your flat money goes each month.',
+      badge: 'Step 5 of 8 • Categories',
+      title: 'Category Tags & Spending Chart 🏷️',
+      subtitle: 'See where your flat money goes every month with visual analytics.',
       icon: <Tag className="w-8 h-8 text-pink-400" />,
-      iconBg: 'bg-pink-500/10 border-pink-500/30',
+      iconBg: 'bg-pink-500/15 border-pink-500/30',
       points: [
         {
           emoji: '🏠',
-          title: 'Pre-loaded Indian household tags',
-          desc: 'Maid Salary 🧹  ·  Cook 👨‍🍳  ·  Wi-Fi Bill 📶  ·  Zepto/Blinkit 🛒  ·  Electricity ⚡  ·  Rent 🏠  ·  Water Can 💧  ·  LPG Cylinder 🔥  ·  Swiggy 🍔',
+          title: 'Indian Household Presets',
+          desc: 'Maid Salary 🧹 • Cook 👨‍🍳 • Wi-Fi Bill 📶 • Zepto/Blinkit 🛒 • Electricity ⚡ • Rent 🏠 • Water Can 💧 • LPG Cylinder 🔥 • Swiggy 🍔',
         },
         {
           emoji: '➕',
-          title: 'Create your own tag',
-          desc: 'Tap "+ New Tag" inside the Add Expense form to create a custom tag like "Parking 🚗" or "OTT Subscription 🎬".',
+          title: 'Create Your Own Custom Tags',
+          desc: 'Tap "+ New Tag" to create custom tags like "OTT Subscription 🎬", "Gym 🏋️", or "Drinking Water 💧".',
         },
         {
           emoji: '📊',
-          title: 'Spending bar chart',
-          desc: 'The main screen shows a colour-coded bar chart so you can see at a glance how much went on groceries vs utilities.',
+          title: 'Visual Spending Breakdown',
+          desc: 'A real-time bar chart on your home screen tracks category percentages and total group burn rate.',
         },
       ],
       example: (
-        <div className="rounded-xl bg-zinc-950 border border-white/8 overflow-hidden text-[11px]">
-          <div className="px-3 py-1.5 bg-white/5 text-zinc-500 text-[10px] uppercase tracking-wider">
-            This month's spending breakdown
+        <div className="rounded-xl bg-zinc-950 border border-white/10 overflow-hidden text-xs">
+          <div className="px-3.5 py-2 bg-white/5 text-zinc-300 text-xs uppercase tracking-wider font-bold">
+            Monthly Spending Breakdown
           </div>
-          {[
-            { tag: '🏠 Rent', amt: '₹12,000', pct: 62, color: 'bg-rose-500' },
-            { tag: '🧹 Maid Salary', amt: '₹3,500', pct: 18, color: 'bg-amber-400' },
-            { tag: '📶 Wi-Fi Bill', amt: '₹1,499', pct: 8, color: 'bg-sky-400' },
-            { tag: '🛒 Zepto/Blinkit', amt: '₹2,300', pct: 12, color: 'bg-emerald-400' },
-          ].map(({ tag, amt, pct, color }) => (
-            <div key={tag} className="px-3 py-2 space-y-1 border-b border-white/5 last:border-0">
-              <div className="flex justify-between">
-                <span className="text-white">{tag}</span>
-                <span className="text-zinc-300 font-semibold">{amt}</span>
+          <div className="p-3 space-y-2.5">
+            {[
+              { tag: '🏠 Rent', amt: '₹12,000', pct: 62, color: 'bg-rose-500' },
+              { tag: '🧹 Maid Salary', amt: '₹3,500', pct: 18, color: 'bg-amber-400' },
+              { tag: '📶 Wi-Fi Bill', amt: '₹1,499', pct: 8, color: 'bg-sky-400' },
+              { tag: '🛒 Zepto/Blinkit', amt: '₹2,300', pct: 12, color: 'bg-emerald-400' },
+            ].map(({ tag, amt, pct, color }) => (
+              <div key={tag} className="space-y-1">
+                <div className="flex justify-between text-xs">
+                  <span className="text-white font-medium">{tag}</span>
+                  <span className="text-zinc-200 font-bold">{amt}</span>
+                </div>
+                <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                  <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
+                </div>
               </div>
-              <div className="h-1 bg-white/8 rounded-full overflow-hidden">
-                <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       ),
     },
 
     // ── Step 6 ── Settlements
     {
-      badge: 'Step 6 of 8',
-      title: 'Who Owes Whom 🧾',
-      subtitle: 'No more mental maths — KharchaSplit finds the minimum number of payments needed.',
+      badge: 'Step 6 of 8 • Debt Minimization',
+      title: 'Who Owes Whom (Minimized Debt) 🧾',
+      subtitle: 'No complex webs of debt. The algorithm minimizes transactions into direct payments.',
       icon: <Sparkles className="w-8 h-8 text-emerald-400" />,
-      iconBg: 'bg-emerald-500/10 border-emerald-500/30',
+      iconBg: 'bg-emerald-500/15 border-emerald-500/30',
       points: [
         {
           emoji: '🤖',
-          title: 'Smart Algorithm',
-          desc: 'With 4 flatmates, you could have up to 12 cross-payments. The algorithm reduces that to just 2–3 clean transfers.',
+          title: 'Greedy Min-Cash Flow Algorithm',
+          desc: 'Instead of 10 confusing cross-payments between roommates, the math collapses them into just 1–2 direct payments.',
         },
         {
           emoji: '🟢',
-          title: 'Green card = money coming to you',
-          desc: 'Someone owes you money. You\'ll see their name, the amount, and a "Pay via UPI" button they can tap.',
+          title: 'Green Cards = Money Coming to You',
+          desc: 'Shows who owes you money with their UPI details ready for requesting payment.',
         },
         {
           emoji: '🔴',
-          title: 'Red card = you owe someone',
-          desc: 'You owe money. Tap "Pay via UPI App" to open GPay/PhonePe with the exact amount pre-filled.',
+          title: 'Red Cards = You Owe Someone',
+          desc: 'Shows the receiver and exact amount. Tap "Pay via UPI App" to settle up immediately.',
         },
       ],
       example: (
-        <div className="rounded-xl bg-zinc-950 border border-white/8 overflow-hidden text-[11px]">
-          <div className="px-3 py-1.5 bg-white/5 text-zinc-500 text-[10px] uppercase tracking-wider">
-            Settlement Cards — This Week
+        <div className="rounded-xl bg-zinc-950 border border-white/10 overflow-hidden text-xs">
+          <div className="px-3.5 py-2 bg-white/5 text-zinc-300 text-xs uppercase tracking-wider font-bold">
+            Settlement Summary Example
           </div>
-          <div className="p-2.5 space-y-2">
-            <div className="rounded-lg bg-rose-500/10 border border-rose-500/20 px-3 py-2.5 flex items-center gap-2">
-              <div className="grow">
-                <div className="text-white font-semibold">Rohit → Aman</div>
-                <div className="text-zinc-400 text-[10px]">Grocery split</div>
+          <div className="p-3 space-y-2">
+            <div className="rounded-lg bg-rose-500/15 border border-rose-500/30 p-3 flex items-center justify-between gap-3">
+              <div>
+                <div className="text-white font-bold text-sm">Rohit → Aman</div>
+                <div className="text-zinc-300 text-xs">Settling grocery share</div>
               </div>
-              <div className="text-rose-400 font-bold text-sm">₹280</div>
-              <div className="text-[10px] text-rose-300 border border-rose-500/30 rounded px-1.5 py-0.5">Pay UPI →</div>
+              <div className="flex items-center gap-2">
+                <span className="text-rose-400 font-black text-base">₹280</span>
+                <span className="text-xs bg-rose-500 text-white font-bold px-2 py-1 rounded shadow">Pay UPI →</span>
+              </div>
             </div>
-            <div className="rounded-lg bg-rose-500/10 border border-rose-500/20 px-3 py-2.5 flex items-center gap-2">
-              <div className="grow">
-                <div className="text-white font-semibold">Priya → Aman</div>
-                <div className="text-zinc-400 text-[10px]">Wi-Fi + Grocery</div>
+            <div className="rounded-lg bg-rose-500/15 border border-rose-500/30 p-3 flex items-center justify-between gap-3">
+              <div>
+                <div className="text-white font-bold text-sm">Priya → Aman</div>
+                <div className="text-zinc-300 text-xs">Wi-Fi + Zepto share</div>
               </div>
-              <div className="text-rose-400 font-bold text-sm">₹780</div>
-              <div className="text-[10px] text-rose-300 border border-rose-500/30 rounded px-1.5 py-0.5">Pay UPI →</div>
+              <div className="flex items-center gap-2">
+                <span className="text-rose-400 font-black text-base">₹780</span>
+                <span className="text-xs bg-rose-500 text-white font-bold px-2 py-1 rounded shadow">Pay UPI →</span>
+              </div>
             </div>
           </div>
-          <div className="px-3 py-1.5 border-t border-white/8 text-center text-zinc-500 text-[10px]">
-            3 people · 6 expenses → just 2 payments needed ✓
+          <div className="px-3 py-1.5 border-t border-white/10 text-center text-zinc-300 text-xs font-medium">
+            3 roommates • 6 mixed bills ➔ only 2 direct payments needed
           </div>
         </div>
       ),
@@ -339,45 +345,45 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
 
     // ── Step 7 ── UPI / QR
     {
-      badge: 'Step 7 of 8',
-      title: 'Pay via UPI or QR Code 📱',
-      subtitle: 'One tap opens GPay or PhonePe with the exact rupee amount already filled in.',
+      badge: 'Step 7 of 8 • 1-Click Payments',
+      title: 'Pay via UPI or In-Browser QR 📱',
+      subtitle: 'One tap opens GPay, PhonePe, or Paytm with the exact rupee amount pre-filled.',
       icon: <QrCode className="w-8 h-8 text-violet-400" />,
-      iconBg: 'bg-violet-500/10 border-violet-500/30',
+      iconBg: 'bg-violet-500/15 border-violet-500/30',
       points: [
         {
           emoji: '📲',
-          title: 'On Mobile — 1 tap to pay',
-          desc: 'Tap "Pay via UPI App" → your phone opens GPay / PhonePe / Paytm with the UPI ID and ₹ amount already filled. Just hit Confirm.',
+          title: 'On Mobile: 1-Tap UPI Intent',
+          desc: 'Tap "Pay via UPI App" → your phone opens GPay / PhonePe / Paytm with the recipient and ₹ amount already pre-filled. Just enter your UPI PIN.',
         },
         {
           emoji: '🖥️',
-          title: 'On Desktop / Laptop — scan the QR',
-          desc: 'Tap "Show QR Code" → a high-res QR code is generated on screen. Scan it with your phone camera and pay directly.',
+          title: 'On Laptop/Desktop: Scan QR Code',
+          desc: 'Tap "Show QR" → an instant crisp QR code renders on your screen. Scan it with any phone camera to pay immediately.',
         },
         {
           emoji: '🎉',
-          title: 'Mark Paid + WhatsApp Receipt',
-          desc: 'After paying, tap "Mark as Paid". You can optionally auto-send a WhatsApp receipt to the receiver. Confetti plays on settlement!',
+          title: 'Mark as Paid & WhatsApp Receipt',
+          desc: 'After payment, tap "Mark Paid". You can send an auto-composed WhatsApp receipt to the receiver and enjoy celebration confetti!',
         },
       ],
       example: (
-        <div className="rounded-xl bg-zinc-950 border border-white/8 overflow-hidden text-[11px]">
-          <div className="px-3 py-1.5 bg-white/5 text-zinc-500 text-[10px] uppercase tracking-wider">
-            What happens when you tap "Pay via UPI App"
+        <div className="rounded-xl bg-zinc-950 border border-white/10 overflow-hidden text-xs">
+          <div className="px-3.5 py-2 bg-white/5 text-zinc-300 text-xs uppercase tracking-wider font-bold">
+            How UPI Intent Works
           </div>
-          <div className="p-3 space-y-2.5">
-            <div className="flex items-center gap-2">
-              <span className="w-5 h-5 rounded-full bg-violet-500/20 text-violet-400 flex items-center justify-center text-[10px] shrink-0 font-bold">1</span>
-              <span className="text-zinc-300">App generates link: <code className="text-violet-300">upi://pay?pa=aman@okaxis&am=280</code></span>
+          <div className="p-3.5 space-y-2.5">
+            <div className="flex items-start gap-2.5">
+              <span className="w-5 h-5 rounded-full bg-violet-500/20 text-violet-300 flex items-center justify-center text-xs shrink-0 font-bold border border-violet-500/30">1</span>
+              <span className="text-zinc-200">App generates NPCI link: <code className="text-violet-300 font-mono text-xs bg-violet-950/60 border border-violet-500/30 px-1 py-0.5 rounded">upi://pay?pa=aman@okaxis&am=280</code></span>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="w-5 h-5 rounded-full bg-violet-500/20 text-violet-400 flex items-center justify-center text-[10px] shrink-0 font-bold">2</span>
-              <span className="text-zinc-300">Your phone opens GPay / PhonePe with Aman's name & ₹280 pre-filled</span>
+            <div className="flex items-start gap-2.5">
+              <span className="w-5 h-5 rounded-full bg-violet-500/20 text-violet-300 flex items-center justify-center text-xs shrink-0 font-bold border border-violet-500/30">2</span>
+              <span className="text-zinc-200">Your phone opens GPay / PhonePe with Aman's name & exact ₹280 ready.</span>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[10px] shrink-0 font-bold">3</span>
-              <span className="text-zinc-300">You confirm → done. No need to type anything manually.</span>
+            <div className="flex items-start gap-2.5">
+              <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-300 flex items-center justify-center text-xs shrink-0 font-bold border border-emerald-500/30">3</span>
+              <span className="text-zinc-200">Enter UPI PIN → payment complete without typing any UPI ID or amount manually.</span>
             </div>
           </div>
         </div>
@@ -386,26 +392,26 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
 
     // ── Step 8 ── Flat Rooms + CTA
     {
-      badge: 'Step 8 of 8',
+      badge: 'Step 8 of 8 • Ready',
       title: "You're All Set! 🚀",
-      subtitle: 'Explore with demo data or start fresh with your real flatmates.',
+      subtitle: 'Explore with full sample data or start fresh with your real flatmates.',
       icon: <Rocket className="w-8 h-8 text-teal-400" />,
-      iconBg: 'bg-teal-500/10 border-teal-500/30',
+      iconBg: 'bg-teal-500/15 border-teal-500/30',
       points: [
         {
           emoji: '🏠',
-          title: 'Create a Flat Room (optional)',
-          desc: 'Tap the "Rooms" icon in the header to create a shared room like #KORA-402. Share the invite link — your flatmates join and all expenses sync in real-time across everyone\'s phones.',
+          title: 'Multiplayer Flat Rooms',
+          desc: 'Create a shared room (e.g. #KORA-402) and send the invite link. Any expense added by one person syncs instantly to all flatmates in real-time.',
         },
         {
           emoji: '🔄',
-          title: 'Recurring Bills',
-          desc: 'Set monthly expenses (rent, maid salary) once. KharchaSplit reminds you and re-adds them automatically each month.',
+          title: 'Recurring Monthly Bills',
+          desc: 'Schedule recurring rent, cook, and maid expenses once. KharchaSplit reminds you and logs them automatically.',
         },
         {
           emoji: '📄',
-          title: 'Reports & Export',
-          desc: 'Tap "Report" in the header to export a PDF of the full ledger or share a formatted WhatsApp summary to your flat group.',
+          title: '1-Click PDF & WhatsApp Reports',
+          desc: 'Generate clean multi-page ledger PDFs and copy month-end WhatsApp summaries for your flat chat.',
         },
       ],
       example: null,
@@ -442,36 +448,29 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-[160] flex items-center justify-center p-3 bg-black/90 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="w-full max-w-md rounded-3xl bg-zinc-950 border border-white/10 shadow-2xl relative overflow-hidden flex flex-col max-h-[95dvh]">
+      <div className="w-full max-w-xl rounded-3xl bg-[#0e0e13] border border-white/15 shadow-2xl relative overflow-hidden flex flex-col max-h-[92dvh]">
 
         {/* Full-width progress bar (top edge) */}
-        <div className="h-1 bg-white/5 rounded-t-3xl overflow-hidden shrink-0">
+        <div className="h-1.5 bg-white/10 rounded-t-3xl overflow-hidden shrink-0">
           <div
             className={`h-full transition-all duration-300 ${isPurple ? 'bg-purple-500' : 'bg-rose-500'}`}
             style={{ width: `${progressPct}%` }}
           />
         </div>
 
-        {/* Glow accent */}
-        <div
-          className={`absolute -top-16 -right-16 w-40 h-40 rounded-full blur-3xl pointer-events-none opacity-15 ${
-            isPurple ? 'bg-purple-500' : 'bg-rose-500'
-          }`}
-        />
-
         {/* Scrollable body */}
-        <div className="overflow-y-auto flex flex-col p-5 sm:p-6 space-y-4 min-h-0">
+        <div className="overflow-y-auto flex flex-col p-6 sm:p-7 space-y-4 min-h-0">
 
           {/* Header row: badge + skip */}
           <div className="flex items-center justify-between shrink-0">
-            <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-zinc-400 bg-zinc-900 border border-white/5 px-2.5 py-1 rounded-full flex items-center gap-1.5">
-              <Sparkles className="w-3 h-3 text-amber-400" />
+            <span className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-200 bg-zinc-900 border border-white/10 px-3 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
               <span>{current.badge}</span>
             </span>
             <button
               type="button"
               onClick={handleFinish}
-              className="text-xs text-zinc-500 hover:text-white transition-colors cursor-pointer flex items-center gap-1"
+              className="text-xs font-semibold text-zinc-400 hover:text-white transition-colors cursor-pointer flex items-center gap-1.5 bg-zinc-900/60 hover:bg-zinc-800 border border-white/10 px-2.5 py-1 rounded-lg"
             >
               <span>Skip Tour</span>
               <X className="w-3.5 h-3.5" />
@@ -479,31 +478,31 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
           </div>
 
           {/* Icon + title */}
-          <div className="flex items-start gap-3 shrink-0">
+          <div className="flex items-start gap-3.5 shrink-0">
             <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border shadow-lg shrink-0 ${current.iconBg}`}>
               {current.icon}
             </div>
-            <div className="space-y-0.5 pt-0.5">
-              <h2 className="text-lg sm:text-xl font-black text-white font-heading leading-snug">
+            <div className="space-y-1 pt-0.5 min-w-0">
+              <h2 className="text-xl sm:text-2xl font-black text-white font-heading leading-tight tracking-tight">
                 {current.title}
               </h2>
-              <p className="text-[11px] text-zinc-400 leading-relaxed">
+              <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed font-normal">
                 {current.subtitle}
               </p>
             </div>
           </div>
 
           {/* Bullet points */}
-          <div className="space-y-2 shrink-0">
+          <div className="space-y-2.5 shrink-0">
             {current.points.map((pt, idx) => (
               <div
                 key={idx}
-                className="p-3 rounded-xl bg-zinc-900/60 border border-white/5 flex items-start gap-2.5"
+                className="p-3.5 rounded-xl bg-zinc-900/80 border border-white/10 flex items-start gap-3 shadow-sm"
               >
-                <span className="text-base shrink-0 leading-none mt-0.5">{pt.emoji}</span>
-                <div className="space-y-0.5 text-left min-w-0">
-                  <div className="text-[11px] font-bold text-white">{pt.title}</div>
-                  <div className="text-[10px] sm:text-[11px] text-zinc-400 leading-relaxed">{pt.desc}</div>
+                <span className="text-xl shrink-0 leading-none mt-0.5">{pt.emoji}</span>
+                <div className="space-y-1 text-left min-w-0">
+                  <div className="text-sm font-bold text-white tracking-tight">{pt.title}</div>
+                  <div className="text-xs sm:text-sm text-zinc-200 leading-relaxed font-normal">{pt.desc}</div>
                 </div>
               </div>
             ))}
@@ -511,14 +510,14 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
 
           {/* Example card (when present) */}
           {current.example != null && (
-            <div className="shrink-0">
+            <div className="shrink-0 mt-1">
               {current.example}
             </div>
           )}
 
           {/* CTA buttons for last step */}
           {current.isCta && (
-            <div className="space-y-2 shrink-0">
+            <div className="space-y-2.5 shrink-0 pt-2">
               {onLoadDemo && (
                 <button
                   type="button"
@@ -526,7 +525,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
                     try { localStorage.setItem('kharchasplit_tutorial_seen', 'v2'); } catch { /* ignore */ }
                     onLoadDemo();
                   }}
-                  className={`w-full py-3 rounded-2xl text-sm font-bold transition-all cursor-pointer shadow-lg flex items-center justify-center gap-2 ${
+                  className={`w-full py-3.5 rounded-2xl text-sm font-bold transition-all cursor-pointer shadow-xl flex items-center justify-center gap-2 ${
                     isPurple
                       ? 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-purple-950/60'
                       : 'bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white shadow-rose-950/60'
@@ -539,7 +538,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
               <button
                 type="button"
                 onClick={handleFinish}
-                className="w-full py-2.5 rounded-2xl text-xs font-semibold bg-zinc-900 hover:bg-zinc-800 border border-white/8 text-zinc-300 transition-all cursor-pointer"
+                className="w-full py-3 rounded-2xl text-xs font-semibold bg-zinc-900 hover:bg-zinc-800 border border-white/15 text-zinc-200 transition-all cursor-pointer"
               >
                 Start Fresh with My Real Flatmates
               </button>
@@ -548,20 +547,20 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
         </div>
 
         {/* Sticky footer: dots + nav */}
-        <div className="px-5 sm:px-6 py-3.5 border-t border-white/5 flex items-center justify-between gap-3 shrink-0 bg-zinc-950">
+        <div className="px-6 py-4 border-t border-white/10 flex items-center justify-between gap-3 shrink-0 bg-[#0e0e13]">
           {/* Progress dots */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5">
             {STEPS.map((_, idx) => (
               <button
                 key={idx}
                 type="button"
                 onClick={() => setCurrentStep(idx)}
-                className={`h-1.5 rounded-full transition-all cursor-pointer ${
+                className={`h-2 rounded-full transition-all cursor-pointer ${
                   currentStep === idx
                     ? isPurple
-                      ? 'w-5 bg-purple-400'
-                      : 'w-5 bg-rose-500'
-                    : 'w-1.5 bg-zinc-700 hover:bg-zinc-500'
+                      ? 'w-6 bg-purple-400'
+                      : 'w-6 bg-rose-500'
+                    : 'w-2 bg-zinc-600 hover:bg-zinc-400'
                 }`}
                 title={`Step ${idx + 1}`}
               />
@@ -569,12 +568,12 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
           </div>
 
           {/* Nav buttons */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             {currentStep > 0 && (
               <button
                 type="button"
                 onClick={handlePrev}
-                className="px-3 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-700 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1"
+                className="px-3.5 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border border-zinc-700 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Back</span>
@@ -585,7 +584,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
               <button
                 type="button"
                 onClick={handleNext}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-lg flex items-center gap-1.5 ${
+                className={`px-5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-lg flex items-center gap-1.5 ${
                   isPurple
                     ? 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-purple-950/60'
                     : 'bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white shadow-rose-950/60'
