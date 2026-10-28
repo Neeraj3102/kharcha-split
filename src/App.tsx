@@ -158,18 +158,19 @@ export function App() {
   const [selectedMemberFilter, setSelectedMemberFilter] = useState<string | null>(null);
 
   // New-User Onboarding Tutorial Modal State (Only auto-shows to fresh first-time users)
+  // Version check: 'v2' = saw the detailed tour. Anything else (including old 'true') triggers the new tour once.
   const [isTutorialOpen, setIsTutorialOpen] = useState<boolean>(() => {
     try {
       const hasSeen = localStorage.getItem('kharchasplit_tutorial_seen');
-      if (hasSeen === 'true') return false;
+      if (hasSeen === 'v2') return false;
 
       const hasData = localStorage.getItem('kharchasplit_v2_data');
       if (hasData) {
         try {
           const parsed = JSON.parse(hasData);
           if (parsed && (parsed.members?.length > 0 || parsed.expenses?.length > 0)) {
-            localStorage.setItem('kharchasplit_tutorial_seen', 'true');
-            return false;
+            // Existing users with real data: show the new tour once, don't suppress it
+            return true;
           }
         } catch {
           // ignore
@@ -1322,7 +1323,16 @@ export function App() {
       {/* 12. Onboarding Tutorial */}
       <TutorialModal
         isOpen={isTutorialOpen}
-        onClose={() => setIsTutorialOpen(false)}
+        onClose={() => {
+          try { localStorage.setItem('kharchasplit_tutorial_seen', 'v2'); } catch { /* ignore */ }
+          setIsTutorialOpen(false);
+        }}
+        onLoadDemo={() => {
+          setState(DEMO_STATE);
+          saveStateToLocalStorage(DEMO_STATE);
+          try { localStorage.setItem('kharchasplit_tutorial_seen', 'v2'); } catch { /* ignore */ }
+          setIsTutorialOpen(false);
+        }}
         theme={effectiveTheme}
       />
 
