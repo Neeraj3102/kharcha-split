@@ -29,6 +29,38 @@
   }
 }
 
+/* 📱 Mobile Specific Optimizations */
+
+/* Safe area padding utilities for mobile notched devices and iOS home bar */
+.pb-safe {
+  padding-bottom: max(0.6rem, env(safe-area-inset-bottom, 0.6rem)) !important;
+}
+
+.pt-safe {
+  padding-top: max(0.6rem, env(safe-area-inset-top, 0.6rem)) !important;
+}
+
+/* Hide scrollbar utility for touch scroll ribbons on mobile */
+.no-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* Prevent iOS Safari from auto-zooming into inputs when tapped */
+@media screen and (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+
+  /* Ensure modal dialogs fit within mobile dynamic viewports (dvh) */
+  .glass-panel[class*="max-h-"] {
+    max-height: 90dvh !important;
+  }
+}
+
 /* 🍷 The Weeknd Synthwave Noir Theme */
 .theme-weeknd {
   --primary: #ff003b;

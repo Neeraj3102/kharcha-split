@@ -70,11 +70,11 @@ export const Header: React.FC<HeaderProps> = ({
     <header className="relative w-full pt-4 pb-6 border-b border-white/10">
       <div className="max-w-6xl mx-auto px-4 space-y-3">
         {/* Tier 1: Brand & Context Controls (Room, Profile, Notifications, Theme) */}
-        <div className="flex items-center justify-between gap-3 pb-3 border-b border-white/5">
+        <div className="flex items-center justify-between gap-2 sm:gap-3 pb-3 border-b border-white/5">
           {/* Brand with Responsive Logo */}
-          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <div
-              className={`relative flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 rounded-xl p-[1px] shrink-0 ${
+              className={`relative flex items-center justify-center w-9 h-9 sm:w-11 sm:h-11 rounded-xl p-[1px] shrink-0 ${
                 isPurple
                   ? 'bg-gradient-to-br from-purple-400 via-purple-600 to-indigo-600 shadow-lg shadow-purple-950/60'
                   : 'bg-gradient-to-br from-rose-600 via-rose-700 to-amber-600 neon-glow-red'
@@ -82,7 +82,7 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <div className="w-full h-full bg-[#0d0d12] rounded-xl flex items-center justify-center">
                 <span
-                  className={`font-heading text-lg sm:text-xl font-black tracking-tighter ${
+                  className={`font-heading text-base sm:text-xl font-black tracking-tighter ${
                     isPurple ? 'text-purple-400' : 'text-rose-500'
                   }`}
                 >
@@ -104,20 +104,20 @@ export const Header: React.FC<HeaderProps> = ({
               </span>
             </div>
             <div className="min-w-0">
-              <h1 className="text-lg sm:text-2xl font-extrabold tracking-tight text-white flex items-center gap-1.5 shrink-0 leading-none">
+              <h1 className="text-base sm:text-2xl font-extrabold tracking-tight text-white flex items-center gap-1 shrink-0 leading-none">
                 <span>KHARCHA</span>
                 <span className={isPurple ? 'text-purple-400' : 'text-rose-500'}>
                   SPLIT
                 </span>
               </h1>
-              <p className="text-[10px] sm:text-xs text-zinc-400 font-medium truncate mt-1">
+              <p className="text-[10px] sm:text-xs text-zinc-400 font-medium truncate mt-0.5 sm:mt-1 max-w-[120px] sm:max-w-none">
                 Flatmate Ledger • Instant UPI Settle
               </p>
             </div>
           </div>
 
           {/* Right: Room Switcher, User Profile, Notifications & Theme Toggle */}
-          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             {/* MULTIPLAYER FLAT ROOM SWITCHER BUTTON */}
             <button
               onClick={onOpenRoomManager}

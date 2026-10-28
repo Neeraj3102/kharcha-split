@@ -459,7 +459,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
         </div>
 
         {/* Scrollable body */}
-        <div className="overflow-y-auto flex flex-col p-6 sm:p-7 space-y-4 min-h-0">
+        <div className="overflow-y-auto flex flex-col p-4 sm:p-7 space-y-3.5 sm:space-y-4 min-h-0">
 
           {/* Header row: badge + skip */}
           <div className="flex items-center justify-between shrink-0">
@@ -547,7 +547,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
         </div>
 
         {/* Sticky footer: dots + nav */}
-        <div className="px-6 py-4 border-t border-white/10 flex items-center justify-between gap-3 shrink-0 bg-[#0e0e13]">
+        <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-white/10 flex items-center justify-between gap-3 shrink-0 bg-[#0e0e13]">
           {/* Progress dots */}
           <div className="flex items-center gap-1.5">
             {STEPS.map((_, idx) => (
