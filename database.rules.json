@@ -1,0 +1,35 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "kharcha_rooms": {
+      "$roomId": {
+        ".read": true,
+        ".write": true,
+        "meta": {
+          ".validate": "newData.hasChildren(['roomName']) && newData.child('roomName').isString() && newData.child('roomName').val().length <= 60"
+        },
+        "expenses": {
+          "$expenseId": {
+            ".validate": "newData.hasChildren(['title', 'totalAmount']) && newData.child('title').isString() && newData.child('title').val().length <= 150 && newData.child('totalAmount').isNumber() && newData.child('totalAmount').val() > 0 && newData.child('totalAmount').val() <= 10000000"
+          }
+        },
+        "members": {
+          "$memberId": {
+            ".validate": "newData.hasChildren(['name']) && newData.child('name').isString() && newData.child('name').val().length <= 60"
+          }
+        },
+        "joinRequests": {
+          "$requestId": {
+            ".validate": "newData.hasChildren(['name', 'deviceId', 'status']) && newData.child('name').isString() && newData.child('name').val().length <= 60 && (newData.child('status').val() === 'PENDING' || newData.child('status').val() === 'APPROVED' || newData.child('status').val() === 'REJECTED')"
+          }
+        },
+        "approvedDevices": {
+          "$deviceId": {
+            ".validate": "newData.hasChildren(['approvedAt'])"
+          }
+        }
+      }
+    }
+  }
+}

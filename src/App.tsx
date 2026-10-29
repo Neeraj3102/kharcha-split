@@ -261,7 +261,12 @@ export function App() {
   // Room Access Approval State
   const [deviceApprovalStatus, setDeviceApprovalStatus] = useState<
     'APPROVED' | 'PENDING' | 'REJECTED' | 'NONE'
-  >('APPROVED');
+  >(() => {
+    const active = getActiveRoomId();
+    if (!active) return 'APPROVED';
+    if (isUserRoomAdmin(active.roomId)) return 'APPROVED';
+    return 'PENDING';
+  });
   const [pendingJoinRequests, setPendingJoinRequests] = useState<JoinRequest[]>([]);
 
   // Disconnect handler

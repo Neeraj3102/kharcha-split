@@ -18,6 +18,7 @@ import {
   ArrowLeft,
   CheckCircle,
   AlertTriangle,
+  Download,
 } from 'lucide-react';
 import type { AppTheme } from '../types';
 import {
@@ -25,11 +26,18 @@ import {
   deleteRoom,
   deleteExpenseFromRoom,
   deleteMemberFromRoom,
-  getMasterCredentials,
-  saveMasterCredentials,
   getFirebaseDb,
   saveActiveRoomId,
 } from '../utils/firebase';
+import {
+  isMasterPasswordSet,
+  setMasterPassword,
+  verifyMasterPassword,
+  getRateLimitStatus,
+  isAdminAuthenticated,
+  clearAdminSession,
+} from '../utils/crypto';
+import type { RateLimitStatus } from '../utils/crypto';
 import type { FirebaseRoomData } from '../utils/firebase';
 
 interface AdminPortalModalProps {
@@ -48,19 +56,40 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
   onRoomPurged,
 }) => {
   // Auth state
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    return sessionStorage.getItem('kharchasplit_master_auth') === 'true';
-  });
-  const [loginId, setLoginId] = useState('');
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(isAdminAuthenticated);
+  const [isConfigured, setIsConfigured] = useState<boolean>(isMasterPasswordSet);
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [authError, setAuthError] = useState('');
+  const [rateLimit, setRateLimit] = useState<RateLimitStatus>(getRateLimitStatus);
+  const [lockoutCountdown, setLockoutCountdown] = useState<number>(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Change credentials state
   const [showChangeCreds, setShowChangeCreds] = useState(false);
-  const [newMasterId, setNewMasterId] = useState('');
   const [newMasterPass, setNewMasterPass] = useState('');
   const [credsSuccess, setCredsSuccess] = useState('');
+
+  // Lockout countdown timer
+  useEffect(() => {
+    const status = getRateLimitStatus();
+    setRateLimit(status);
+    if (status.isLocked) {
+      setLockoutCountdown(status.remainingSeconds);
+      const interval = setInterval(() => {
+        const currentStatus = getRateLimitStatus();
+        setRateLimit(currentStatus);
+        if (!currentStatus.isLocked) {
+          clearInterval(interval);
+          setLockoutCountdown(0);
+        } else {
+          setLockoutCountdown(currentStatus.remainingSeconds);
+        }
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [authError, isOpen]);
 
   // Rooms data state
   const [rooms, setRooms] = useState<Record<string, FirebaseRoomData>>({});
@@ -98,46 +127,113 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
     setTimeout(() => setActionMsg(null), 3500);
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const creds = getMasterCredentials();
+    if (!password.trim()) {
+      setAuthError('Please enter your master password.');
+      return;
+    }
 
-    if (
-      loginId.trim().toLowerCase() === creds.id.trim().toLowerCase() &&
-      password.trim() === creds.pass.trim()
-    ) {
-      setIsAuthenticated(true);
-      sessionStorage.setItem('kharchasplit_master_auth', 'true');
-      setAuthError('');
-      setLoginId('');
-      setPassword('');
-      showNotification('Master Super-Admin Access Granted 🛡️');
-    } else {
-      setAuthError('Invalid Master Login ID or Password. Access denied.');
+    if (rateLimit.isLocked) {
+      setAuthError(`Login locked for security. Please wait ${rateLimit.remainingSeconds}s.`);
+      return;
+    }
+
+    setIsSubmitting(true);
+    setAuthError('');
+
+    try {
+      // First-time setup flow
+      if (!isConfigured) {
+        if (password.length < 6) {
+          setAuthError('Password must be at least 6 characters.');
+          setIsSubmitting(false);
+          return;
+        }
+        if (password !== confirmPassword) {
+          setAuthError('Passwords do not match.');
+          setIsSubmitting(false);
+          return;
+        }
+
+        await setMasterPassword(password);
+        setIsConfigured(true);
+        setIsAuthenticated(true);
+        setPassword('');
+        setConfirmPassword('');
+        showNotification('Master Password initialized with PBKDF2 salted encryption 🛡️');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Existing verification flow
+      const res = await verifyMasterPassword(password);
+      setRateLimit(res.rateLimit);
+
+      if (res.success) {
+        setIsAuthenticated(true);
+        setAuthError('');
+        setPassword('');
+        showNotification('Master Super-Admin Access Granted 🛡️');
+      } else {
+        if (res.rateLimit.isLocked) {
+          setAuthError(`Too many failed attempts. Login locked for 15 minutes.`);
+        } else {
+          setAuthError(`Invalid master password. ${res.rateLimit.attemptsLeft} attempt(s) remaining.`);
+        }
+      }
+    } catch {
+      setAuthError('Authentication verification failed.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleLogout = () => {
     setIsAuthenticated(false);
-    sessionStorage.removeItem('kharchasplit_master_auth');
+    clearAdminSession();
     setSelectedRoomId(null);
     setAuthError('');
+    showNotification('Logged out from Master Portal.');
   };
 
-  const handleSaveNewCreds = (e: React.FormEvent) => {
+  const handleSaveNewCreds = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMasterId.trim() || newMasterPass.trim().length < 4) {
-      showNotification('ID must not be empty and Password must be at least 4 characters.', true);
+    if (!newMasterPass.trim() || newMasterPass.trim().length < 6) {
+      showNotification('New password must be at least 6 characters.', true);
       return;
     }
-    saveMasterCredentials(newMasterId.trim(), newMasterPass.trim());
-    setCredsSuccess('Master credentials updated successfully!');
+    await setMasterPassword(newMasterPass.trim());
+    setCredsSuccess('Master password updated with salted PBKDF2 hash!');
     setTimeout(() => {
       setCredsSuccess('');
       setShowChangeCreds(false);
-      setNewMasterId('');
       setNewMasterPass('');
     }, 2000);
+  };
+
+  const handleExportBackup = () => {
+    try {
+      const backupData = {
+        app: 'KharchaSplit',
+        version: '1.0',
+        exportedAt: new Date().toISOString(),
+        roomsCount: Object.keys(rooms).length,
+        rooms,
+      };
+      const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `kharchasplit-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showNotification('Database backup downloaded successfully 💾');
+    } catch {
+      showNotification('Failed to generate backup export', true);
+    }
   };
 
   // Danger: Delete Room
@@ -293,37 +389,19 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
 
             <div className="max-w-md space-y-1 mb-6">
               <h3 className="text-xl font-bold text-white font-heading">
-                Master Authentication Required
+                {isConfigured ? 'Master Authentication Required' : 'Initialize Super-Admin Password'}
               </h3>
               <p className="text-xs text-zinc-400">
-                This portal provides unrestricted access to all created rooms and balances across the network. Enter your Super-Admin credentials to proceed.
+                {isConfigured
+                  ? 'This portal provides platform oversight and cloud ledger controls. Enter your master password to proceed.'
+                  : 'No master password is set. Choose a strong master password (min 6 chars) to encrypt admin access using PBKDF2-SHA256 (100k rounds).'}
               </p>
             </div>
 
             <form onSubmit={handleLogin} className="w-full max-w-sm space-y-3.5">
               <div>
                 <label className="block text-left text-xs font-semibold text-zinc-300 mb-1">
-                  Master Login ID
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={loginId}
-                    onChange={(e) => {
-                      setLoginId(e.target.value);
-                      setAuthError('');
-                    }}
-                    placeholder="Enter Master ID"
-                    autoFocus
-                    className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-zinc-900 border border-zinc-700 text-white text-xs font-mono focus:outline-none focus:border-rose-500"
-                  />
-                  <ShieldAlert className="w-4 h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-left text-xs font-semibold text-zinc-300 mb-1">
-                  Master Password
+                  {isConfigured ? 'Master Password' : 'Create Master Password'}
                 </label>
                 <div className="relative">
                   <input
@@ -333,8 +411,10 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                       setPassword(e.target.value);
                       setAuthError('');
                     }}
-                    placeholder="Enter Master Password"
-                    className="w-full pl-9 pr-10 py-2.5 rounded-xl bg-zinc-900 border border-zinc-700 text-white text-xs font-mono focus:outline-none focus:border-rose-500"
+                    disabled={rateLimit.isLocked || isSubmitting}
+                    placeholder={isConfigured ? 'Enter Master Password' : 'Choose a strong password (min 6 chars)'}
+                    autoFocus
+                    className="w-full pl-9 pr-10 py-2.5 rounded-xl bg-zinc-900 border border-zinc-700 text-white text-xs font-mono focus:outline-none focus:border-rose-500 disabled:opacity-50"
                   />
                   <KeyRound className="w-4 h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
                   <button
@@ -347,7 +427,45 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                 </div>
               </div>
 
-              {authError && (
+              {!isConfigured && (
+                <div>
+                  <label className="block text-left text-xs font-semibold text-zinc-300 mb-1">
+                    Confirm Master Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={confirmPassword}
+                      onChange={(e) => {
+                        setConfirmPassword(e.target.value);
+                        setAuthError('');
+                      }}
+                      disabled={isSubmitting}
+                      placeholder="Re-enter master password"
+                      className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-zinc-900 border border-zinc-700 text-white text-xs font-mono focus:outline-none focus:border-rose-500"
+                    />
+                    <KeyRound className="w-4 h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                  </div>
+                </div>
+              )}
+
+              {isConfigured && (
+                <div className="flex items-center justify-between text-[11px] text-zinc-400 px-1">
+                  <span>Attempts remaining:</span>
+                  <span className={`font-mono font-bold ${rateLimit.attemptsLeft <= 2 ? 'text-amber-400' : 'text-zinc-300'}`}>
+                    {rateLimit.attemptsLeft} / 5
+                  </span>
+                </div>
+              )}
+
+              {rateLimit.isLocked && (
+                <div className="p-3 rounded-xl text-xs bg-rose-950/90 border border-rose-800 text-rose-300 text-left flex items-center gap-2 font-mono">
+                  <ShieldAlert className="w-4 h-4 shrink-0 text-rose-400" />
+                  <span>Brute-force protection active: Try again in {lockoutCountdown}s</span>
+                </div>
+              )}
+
+              {authError && !rateLimit.isLocked && (
                 <div className="p-2.5 rounded-lg text-xs bg-rose-950/80 border border-rose-800 text-rose-300 text-left flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4 shrink-0" />
                   <span>{authError}</span>
@@ -356,14 +474,15 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
 
               <button
                 type="submit"
-                className={`w-full py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg ${
+                disabled={rateLimit.isLocked || isSubmitting}
+                className={`w-full py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg disabled:opacity-50 disabled:cursor-not-allowed ${
                   isPurple
                     ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-500 shadow-purple-950/60'
                     : 'bg-gradient-to-r from-rose-600 to-rose-700 text-white hover:from-rose-500'
                 }`}
               >
                 <Unlock className="w-4 h-4" />
-                <span>Authenticate Super-Admin</span>
+                <span>{isSubmitting ? 'Verifying...' : isConfigured ? 'Authenticate Super-Admin' : 'Initialize & Protect Portal'}</span>
               </button>
             </form>
           </div>
@@ -394,10 +513,18 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
 
               <div className="flex items-center gap-2 flex-wrap">
                 <button
+                  onClick={handleExportBackup}
+                  className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-emerald-300 hover:text-white bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-800 transition cursor-pointer flex items-center gap-1.5"
+                  title="Download full JSON snapshot backup of all rooms"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Export Backup</span>
+                </button>
+                <button
                   onClick={() => setShowChangeCreds(!showChangeCreds)}
                   className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-zinc-300 hover:text-white bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 transition cursor-pointer"
                 >
-                  {showChangeCreds ? 'Close Settings' : 'Change Master Credentials'}
+                  {showChangeCreds ? 'Close Settings' : 'Change Master Password'}
                 </button>
                 <button
                   onClick={handleLogout}
@@ -417,37 +544,23 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                 <div className="flex items-center justify-between">
                   <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
                     <KeyRound className="w-4 h-4 text-amber-400" />
-                    <span>Update Super-Admin Master Login</span>
+                    <span>Update Super-Admin Master Password</span>
                   </h4>
                   {credsSuccess && (
                     <span className="text-xs text-emerald-400 font-bold">{credsSuccess}</span>
                   )}
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[11px] font-semibold text-zinc-400 mb-1">
-                      New Master ID
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Neeraj"
-                      value={newMasterId}
-                      onChange={(e) => setNewMasterId(e.target.value)}
-                      className="w-full px-3 py-1.5 rounded-lg bg-zinc-950 border border-zinc-700 text-white text-xs font-mono focus:outline-none focus:border-rose-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-semibold text-zinc-400 mb-1">
-                      New Master Password (min 4 chars)
-                    </label>
-                    <input
-                      type="password"
-                      placeholder="e.g. 696969"
-                      value={newMasterPass}
-                      onChange={(e) => setNewMasterPass(e.target.value)}
-                      className="w-full px-3 py-1.5 rounded-lg bg-zinc-950 border border-zinc-700 text-white text-xs font-mono focus:outline-none focus:border-rose-500"
-                    />
-                  </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-zinc-400 mb-1">
+                    New Master Password (min 6 chars, hashed via PBKDF2 with unique salt)
+                  </label>
+                  <input
+                    type="password"
+                    placeholder="Enter new master password"
+                    value={newMasterPass}
+                    onChange={(e) => setNewMasterPass(e.target.value)}
+                    className="w-full px-3 py-1.5 rounded-lg bg-zinc-950 border border-zinc-700 text-white text-xs font-mono focus:outline-none focus:border-rose-500"
+                  />
                 </div>
                 <button
                   type="submit"
@@ -455,7 +568,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                     isPurple ? 'bg-purple-600 text-white' : 'bg-rose-600 text-white'
                   }`}
                 >
-                  Save New Master Pass
+                  Save New Master Password
                 </button>
               </form>
             )}

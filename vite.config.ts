@@ -9,11 +9,12 @@ export default defineConfig({
     tailwindcss(),
   ],
   build: {
+    sourcemap: false,
     rollupOptions: {
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
-            if (id.includes('jspdf') || id.includes('html2canvas')) {
+            if (id.includes('jspdf')) {
               return 'vendor-pdf';
             }
             if (id.includes('firebase')) {

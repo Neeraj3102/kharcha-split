@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Users, Sliders, Tag as TagIcon, Check, AlertCircle, RefreshCw } from 'lucide-react';
 import type { Member, QuickTag, SplitType, SplitDetail, Expense, AppTheme } from '../types';
+import { sanitizeText, sanitizeAmount } from '../utils/securitySanitizer';
 
 interface AddExpenseModalProps {
   isOpen: boolean;
@@ -200,10 +201,11 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
 
   // Add custom tag handler
   const handleCreateTag = () => {
-    if (!newTagLabel.trim()) return;
+    const cleanLabel = sanitizeText(newTagLabel, 30);
+    if (!cleanLabel) return;
     const newTag: QuickTag = {
       id: `custom-tag-${Date.now()}`,
-      label: newTagLabel.trim(),
+      label: cleanLabel,
       icon: '🏷️',
       isCustom: true,
     };
@@ -216,12 +218,14 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
   // Form submission
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) {
+    const cleanTitle = sanitizeText(title, 120);
+    if (!cleanTitle) {
       setError('Please provide an expense title (e.g. Swiggy, Wi-Fi, Kamla Didi)');
       return;
     }
-    if (totalAmount <= 0) {
-      setError('Please enter a valid expense amount greater than ₹0');
+    const amountCheck = sanitizeAmount(totalAmount);
+    if (!amountCheck.isValid) {
+      setError(amountCheck.error || 'Please enter a valid expense amount');
       return;
     }
 
@@ -237,7 +241,7 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
       // Custom split validation
       if (Math.abs(customDifference) > 0.05) {
         setError(
-          `Custom split amounts must equal ₹${totalAmount}. Current difference: ${
+          `Custom split amounts must equal ₹${amountCheck.value}. Current difference: ${
             customDifference > 0 ? `₹${customDifference} unallocated` : `₹${Math.abs(customDifference)} over budget`
           }`
         );
@@ -247,8 +251,8 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
       finalSplits = Object.entries(customSplits)
         .map(([mId, val]) => ({
           memberId: mId,
-          amount: parseFloat(val.amount) || 0,
-          note: val.note.trim() ? val.note.trim() : undefined,
+          amount: sanitizeAmount(val.amount).value || 0,
+          note: val.note.trim() ? sanitizeText(val.note, 100) : undefined,
         }))
         .filter((s) => s.amount > 0);
 
@@ -260,14 +264,14 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
 
     onSaveExpense(
       {
-        title: title.trim(),
-        totalAmount,
+        title: cleanTitle,
+        totalAmount: amountCheck.value,
         paidById,
         date: editingExpense ? editingExpense.date : new Date().toISOString(),
         tag: selectedTag,
         splitType,
         splits: finalSplits,
-        customNote: customNote.trim() ? customNote.trim() : undefined,
+        customNote: customNote.trim() ? sanitizeText(customNote, 250) : undefined,
         isRecurring,
         recurrenceFrequency: isRecurring ? recurrenceFrequency : undefined,
       },

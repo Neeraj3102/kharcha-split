@@ -1,5 +1,6 @@
 import LZString from 'lz-string';
 import type { AppState } from '../types';
+import { sanitizeAppState } from './securitySanitizer';
 
 /**
  * Encodes the entire app state into a URL hash string
@@ -17,7 +18,8 @@ export function compressStateToUrl(state: AppState): string {
 }
 
 /**
- * Decompresses app state from URL hash if present
+ * Decompresses app state from URL hash if present.
+ * Sanitizes and validates every field to protect against XSS and prototype tampering.
  */
 export function decompressStateFromUrl(): AppState | null {
   try {
@@ -30,13 +32,10 @@ export function decompressStateFromUrl(): AppState | null {
     const decompressed = LZString.decompressFromEncodedURIComponent(compressed);
     if (!decompressed) return null;
 
-    const state = JSON.parse(decompressed) as AppState;
-    if (state && Array.isArray(state.members) && Array.isArray(state.expenses)) {
-      return state;
-    }
-    return null;
+    const parsed = JSON.parse(decompressed);
+    return sanitizeAppState(parsed);
   } catch (err) {
-    console.error('Failed to parse state from URL hash:', err);
+    console.error('Failed to parse or sanitize state from URL hash:', err);
     return null;
   }
 }
