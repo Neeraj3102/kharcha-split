@@ -104,18 +104,20 @@ export const SettlementCards: React.FC<SettlementCardsProps> = ({
         </div>
       ) : (
         <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-zinc-400 font-mono flex items-center gap-2">
-              <span>⚡ Minimized Settlements ({settlements.length})</span>
-              <span className={`text-[10px] px-2 py-0.5 rounded-full border ${
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-sm font-bold uppercase tracking-wider text-zinc-400 font-mono">
+                ⚡ Minimized Settlements ({settlements.length})
+              </h2>
+              <span className={`text-[9px] sm:text-[10px] px-2 py-0.5 rounded-full border font-mono font-semibold ${
                 isPurple
                   ? 'text-purple-400 bg-purple-950/80 border-purple-800/60'
                   : 'text-rose-400 bg-rose-950/80 border-rose-800/60'
               }`}>
                 Greedy Min-Flow Algorithm
               </span>
-            </h2>
-            <span className="text-xs text-zinc-500 hidden sm:inline">
+            </div>
+            <span className="text-[11px] text-zinc-500 hidden sm:inline">
               Fastest way to zero-balance
             </span>
           </div>
@@ -141,7 +143,7 @@ export const SettlementCards: React.FC<SettlementCardsProps> = ({
               return (
                 <div
                   key={settlement.id}
-                  className={`glass-panel glass-card-hover rounded-2xl p-4 sm:p-5 flex flex-col justify-between gap-4 border relative overflow-hidden transition-all ${
+                  className={`glass-panel glass-card-hover rounded-2xl p-3.5 sm:p-5 flex flex-col justify-between gap-3 sm:gap-4 border relative overflow-hidden transition-all ${
                     isUserDebtor
                       ? isPurple ? 'border-purple-500/40 bg-purple-950/15' : 'border-rose-500/40 bg-rose-950/15'
                       : isUserCreditor
@@ -157,20 +159,20 @@ export const SettlementCards: React.FC<SettlementCardsProps> = ({
                   )}
 
                   {/* Top Row: Debtor to Creditor visual */}
-                  <div className="flex items-center justify-between gap-2 pt-1">
+                  <div className="flex items-center justify-between gap-1.5 sm:gap-2 pt-1">
                     {/* Debtor */}
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex items-center gap-2 sm:gap-2.5 min-w-0 flex-1">
                       <div
                         className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-white text-xs shadow-md shrink-0"
                         style={{ backgroundColor: fromMember.avatarColor }}
                       >
                         {fromMember.name.charAt(0)}
                       </div>
-                      <div>
+                      <div className="min-w-0">
                         <div className="text-xs font-bold text-white leading-tight flex items-center gap-1">
-                          <span>{fromMember.name}</span>
+                          <span className="truncate max-w-[85px] sm:max-w-none">{fromMember.name}</span>
                           {isUserDebtor && (
-                            <span className={`text-[9px] font-bold ${isPurple ? 'text-purple-400' : 'text-rose-400'}`}>(You)</span>
+                            <span className={`text-[9px] font-bold shrink-0 ${isPurple ? 'text-purple-400' : 'text-rose-400'}`}>(You)</span>
                           )}
                         </div>
                         <div className={`text-[10px] font-medium ${isPurple ? 'text-purple-400' : 'text-rose-400'}`}>Owes</div>
@@ -178,7 +180,7 @@ export const SettlementCards: React.FC<SettlementCardsProps> = ({
                     </div>
 
                     {/* Arrow & Badge */}
-                    <div className="flex flex-col items-center px-2">
+                    <div className="flex flex-col items-center px-1 shrink-0">
                       <ArrowRight className="w-4 h-4 text-zinc-500" />
                       <span className="text-[9px] uppercase font-mono tracking-widest text-zinc-500">
                         pays
@@ -186,13 +188,13 @@ export const SettlementCards: React.FC<SettlementCardsProps> = ({
                     </div>
 
                     {/* Creditor */}
-                    <div className="flex items-center gap-2.5 text-right">
-                      <div>
+                    <div className="flex items-center gap-2 sm:gap-2.5 text-right min-w-0 flex-1 justify-end">
+                      <div className="min-w-0">
                         <div className="text-xs font-bold text-white leading-tight flex items-center justify-end gap-1">
                           {isUserCreditor && (
-                            <span className="text-[9px] text-emerald-400 font-bold">(You)</span>
+                            <span className="text-[9px] text-emerald-400 font-bold shrink-0">(You)</span>
                           )}
-                          <span>{toMember.name}</span>
+                          <span className="truncate max-w-[85px] sm:max-w-none">{toMember.name}</span>
                         </div>
                         <div className="text-[10px] text-emerald-400 font-medium">Receives</div>
                       </div>

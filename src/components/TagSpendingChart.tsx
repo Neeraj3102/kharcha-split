@@ -352,7 +352,7 @@ export const TagSpendingChart: React.FC<TagSpendingChartProps> = ({
 
           {/* Category List & Chips */}
           <div className="md:col-span-7 space-y-2">
-            <div className="grid grid-cols-2 sm:grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 xs:grid-cols-2 gap-2">
               {sortedCategories.map((cat) => {
                 const isSelected = selectedTagFilter === cat.name;
                 return (

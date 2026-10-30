@@ -289,11 +289,11 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
   return (
     <div 
       onClick={onClose}
-      className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md cursor-pointer"
+      className="fixed inset-0 z-[110] flex items-center justify-center p-2.5 sm:p-4 bg-black/80 backdrop-blur-md cursor-pointer"
     >
       <div 
         onClick={(e) => e.stopPropagation()}
-        className="glass-panel w-full max-w-xl rounded-2xl border border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[92vh] cursor-default"
+        className="glass-panel w-full max-w-xl rounded-2xl border border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[92dvh] sm:max-h-[90vh] cursor-default"
       >
         {/* Header */}
         <div className="p-4 border-b border-white/10 flex items-center justify-between shrink-0">
@@ -679,7 +679,7 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
           </div>
 
           {/* Sticky Submit Footer */}
-          <div className="p-4 border-t border-white/10 bg-zinc-950/90 backdrop-blur-md shrink-0">
+          <div className="p-4 border-t border-white/10 bg-zinc-950/90 backdrop-blur-md shrink-0 pb-safe">
             <button
               type="submit"
               className={`w-full py-3 rounded-xl text-white text-xs font-extrabold uppercase tracking-wider transition-all cursor-pointer shadow-lg active:scale-[0.99] ${

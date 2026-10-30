@@ -177,11 +177,11 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
   return (
     <div 
       onClick={onClose}
-      className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200 cursor-pointer"
+      className="fixed inset-0 z-[120] flex items-center justify-center p-2.5 sm:p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200 cursor-pointer"
     >
       <div 
         onClick={(e) => e.stopPropagation()}
-        className="glass-panel w-full max-w-lg rounded-2xl border border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[92vh] cursor-default"
+        className="glass-panel w-full max-w-lg rounded-2xl border border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[92dvh] sm:max-h-[90vh] cursor-default"
       >
         {/* Modal Header */}
         <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between">

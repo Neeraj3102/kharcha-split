@@ -37,11 +37,11 @@ export const QRCodeModal: React.FC<QRCodeModalProps> = ({
   return (
     <div 
       onClick={onClose}
-      className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md cursor-pointer"
+      className="fixed inset-0 z-[110] flex items-center justify-center p-2.5 sm:p-4 bg-black/85 backdrop-blur-md cursor-pointer"
     >
       <div 
         onClick={(e) => e.stopPropagation()}
-        className="glass-panel w-full max-w-sm rounded-2xl border border-white/10 shadow-2xl overflow-hidden p-6 text-center space-y-4 cursor-default"
+        className="glass-panel w-full max-w-sm rounded-2xl border border-white/10 shadow-2xl overflow-hidden p-4 sm:p-6 text-center space-y-4 cursor-default max-h-[92dvh] overflow-y-auto"
       >
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-white/10">
@@ -62,17 +62,17 @@ export const QRCodeModal: React.FC<QRCodeModalProps> = ({
         </div>
 
         {/* QR Code Container */}
-        <div className={`relative inline-block p-4 bg-white rounded-2xl shadow-xl ${
+        <div className={`relative inline-block p-3 sm:p-4 bg-white rounded-2xl shadow-xl max-w-full ${
           isPurple ? 'shadow-purple-950/40' : 'shadow-rose-950/40'
         }`}>
           {qrDataUrl ? (
             <img
               src={qrDataUrl}
               alt="UPI QR Code"
-              className="w-56 h-56 mx-auto object-contain"
+              className="w-44 h-44 sm:w-56 sm:h-56 mx-auto object-contain"
             />
           ) : (
-            <div className="w-56 h-56 flex items-center justify-center text-zinc-400 text-xs">
+            <div className="w-44 h-44 sm:w-56 sm:h-56 flex items-center justify-center text-zinc-400 text-xs">
               Generating QR...
             </div>
           )}

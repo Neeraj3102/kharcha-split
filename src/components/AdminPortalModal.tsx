@@ -329,7 +329,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-[110] flex items-center justify-center p-2 sm:p-4 bg-black/85 backdrop-blur-md">
-      <div className="glass-panel w-full max-w-4xl rounded-2xl border border-white/10 shadow-2xl overflow-hidden flex flex-col h-[94vh] sm:h-auto sm:max-h-[92vh]">
+      <div className="glass-panel w-full max-w-4xl rounded-2xl border border-white/10 shadow-2xl overflow-hidden flex flex-col h-[94dvh] sm:h-auto sm:max-h-[92vh]">
         {/* MODAL HEADER */}
         <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -382,7 +382,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
 
         {/* VIEW 1: MASTER LOGIN SCREEN */}
         {!isAuthenticated ? (
-          <div className="p-8 sm:p-12 overflow-y-auto flex flex-col items-center justify-center text-center">
+          <div className="p-4 sm:p-12 overflow-y-auto flex flex-col items-center justify-center text-center">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-zinc-800 to-zinc-950 border border-white/10 flex items-center justify-center shadow-2xl mb-4">
               <Lock className={`w-8 h-8 ${isPurple ? 'text-purple-400' : 'text-rose-500'}`} />
             </div>

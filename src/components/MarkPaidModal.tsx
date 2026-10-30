@@ -68,7 +68,7 @@ export const MarkPaidModal: React.FC<MarkPaidModalProps> = ({
   return (
     <div 
       onClick={onClose}
-      className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md cursor-pointer"
+      className="fixed inset-0 z-[110] flex items-center justify-center p-2.5 sm:p-4 bg-black/80 backdrop-blur-md cursor-pointer"
     >
       <div 
         onClick={(e) => e.stopPropagation()}
