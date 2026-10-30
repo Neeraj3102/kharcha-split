@@ -38,6 +38,8 @@ interface HeaderProps {
   onOpenNotifications?: () => void;
   userProfile?: UserProfile | null;
   onOpenProfile: () => void;
+  activeFilter?: { type: 'MEMBER' | 'TAG'; label: string } | null;
+  onClearFilter?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -62,6 +64,8 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenNotifications,
   userProfile,
   onOpenProfile,
+  activeFilter,
+  onClearFilter,
 }) => {
   const isPurple = theme === 'purple';
   const isSystem = theme === 'system';
@@ -104,24 +108,29 @@ export const Header: React.FC<HeaderProps> = ({
               </span>
             </div>
             <div className="min-w-0">
-              <h1 className="text-base sm:text-2xl font-extrabold tracking-tight text-white flex items-center gap-1 shrink-0 leading-none">
+              <h1 className="text-base sm:text-2xl font-extrabold tracking-tight text-white flex items-center gap-1 shrink-0 leading-none whitespace-nowrap">
                 <span>KHARCHA</span>
                 <span className={isPurple ? 'text-purple-400' : 'text-rose-500'}>
                   SPLIT
                 </span>
+                {activeRoom && (
+                  <span className="sm:hidden text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800/80 ml-1">
+                    #{activeRoom.roomId}
+                  </span>
+                )}
               </h1>
-              <p className="text-[10px] sm:text-xs text-zinc-400 font-medium truncate mt-0.5 sm:mt-1 max-w-[120px] sm:max-w-none">
+              <p className="text-[10px] sm:text-xs text-zinc-400 font-medium truncate mt-0.5 sm:mt-1 hidden xs:block max-w-[200px] sm:max-w-none">
                 Flatmate Ledger • Instant UPI Settle
               </p>
             </div>
           </div>
 
-          {/* Right: Room Switcher, User Profile, Notifications & Theme Toggle */}
-          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-            {/* MULTIPLAYER FLAT ROOM SWITCHER BUTTON */}
+          {/* Right: Context Controls (Desktop shows Flats & Profile; Mobile relies on sticky bottom bar) */}
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            {/* MULTIPLAYER FLAT ROOM SWITCHER BUTTON (Desktop only - Mobile has Rooms in bottom bar) */}
             <button
               onClick={onOpenRoomManager}
-              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs font-semibold border transition-all cursor-pointer relative shrink-0 ${
+              className={`hidden sm:flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs font-semibold border transition-all cursor-pointer relative shrink-0 ${
                 pendingRequestsCount > 0
                   ? 'bg-amber-950/80 border-amber-500/80 text-amber-300 hover:bg-amber-900/60 shadow-lg shadow-amber-950/40'
                   : activeRoom
@@ -131,11 +140,8 @@ export const Header: React.FC<HeaderProps> = ({
               title="Switch flats or manage shared rooms"
             >
               <Users className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="hidden sm:inline">
+              <span>
                 {activeRoom ? `Flat #${activeRoom.roomId} ⇄` : 'My Flats ⇄'}
-              </span>
-              <span className="sm:hidden text-[11px] font-bold">
-                {activeRoom ? `#${activeRoom.roomId}` : 'Flats'}
               </span>
               {pendingRequestsCount > 0 && (
                 <span className="px-1.5 py-0.2 rounded-full bg-amber-500 text-zinc-950 text-[10px] font-extrabold animate-bounce">
@@ -160,10 +166,10 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             )}
 
-            {/* USER PROFILE BUTTON */}
+            {/* USER PROFILE BUTTON (Desktop only - Mobile has Profile in bottom bar) */}
             <button
               onClick={onOpenProfile}
-              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs font-semibold border transition-all cursor-pointer shrink-0 ${
+              className={`hidden sm:flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs font-semibold border transition-all cursor-pointer shrink-0 ${
                 userProfile?.name
                   ? 'bg-zinc-900/90 hover:bg-zinc-800 text-white border-zinc-700/80 shadow-sm'
                   : 'bg-zinc-900/60 hover:bg-zinc-800 text-zinc-300 border-zinc-700/50'
@@ -178,14 +184,14 @@ export const Header: React.FC<HeaderProps> = ({
                   >
                     {userProfile.name.charAt(0).toUpperCase()}
                   </div>
-                  <span className="hidden sm:inline max-w-[85px] truncate">
+                  <span className="max-w-[85px] truncate">
                     {userProfile.name}
                   </span>
                 </>
               ) : (
                 <>
                   <User className="w-3.5 h-3.5 text-zinc-400" />
-                  <span className="hidden sm:inline">Profile</span>
+                  <span>Profile</span>
                 </>
               )}
             </button>
@@ -193,7 +199,7 @@ export const Header: React.FC<HeaderProps> = ({
             {/* THEME TOGGLE SWITCHER (K4: Supports Crimson / Purple / System) */}
             <button
               onClick={onToggleTheme}
-              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs font-bold border transition-all cursor-pointer shrink-0 ${
+              className={`p-2 sm:px-3 sm:py-2 rounded-lg text-xs font-bold border transition-all cursor-pointer shrink-0 ${
                 isSystem
                   ? 'bg-zinc-800 text-blue-300 border-blue-500/50 hover:bg-zinc-750'
                   : isPurple
@@ -205,17 +211,17 @@ export const Header: React.FC<HeaderProps> = ({
               {isSystem ? (
                 <>
                   <Laptop className="w-3.5 h-3.5 text-blue-400" />
-                  <span className="hidden sm:inline">Auto</span>
+                  <span className="hidden sm:inline ml-1.5">Auto</span>
                 </>
               ) : isPurple ? (
                 <>
                   <Sparkles className="w-3.5 h-3.5 text-purple-400 fill-purple-400" />
-                  <span className="hidden sm:inline">Purple</span>
+                  <span className="hidden sm:inline ml-1.5">Purple</span>
                 </>
               ) : (
                 <>
                   <Flame className="w-3.5 h-3.5 text-rose-500 fill-rose-500" />
-                  <span className="hidden sm:inline">Crimson</span>
+                  <span className="hidden sm:inline ml-1.5">Crimson</span>
                 </>
               )}
             </button>
@@ -224,7 +230,7 @@ export const Header: React.FC<HeaderProps> = ({
             {canInstall && onInstallApp && (
               <button
                 onClick={onInstallApp}
-                className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs font-bold border transition-all cursor-pointer shrink-0 shadow-md ${
+                className={`p-2 sm:px-3 sm:py-2 rounded-lg text-xs font-bold border transition-all cursor-pointer shrink-0 shadow-md flex items-center gap-1.5 ${
                   isPurple
                     ? 'bg-purple-600 hover:bg-purple-500 text-white border-purple-400 shadow-purple-950/60'
                     : 'bg-rose-600 hover:bg-rose-500 text-white border-rose-400 shadow-rose-950/60'
@@ -233,14 +239,13 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 <Download className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Install App</span>
-                <span className="sm:hidden">Install</span>
               </button>
             )}
           </div>
         </div>
 
-        {/* Tier 2: Action Ribbon */}
-        <div className="flex items-center justify-between gap-2 overflow-x-auto no-scrollbar py-0.5">
+        {/* Tier 2: Action Ribbon (Smooth edge-to-edge scroll on mobile) */}
+        <div className="flex items-center justify-between gap-2 overflow-x-auto no-scrollbar py-0.5 -mx-4 px-4 sm:mx-0 sm:px-0">
           {/* Primary Operations */}
           <div className="flex items-center gap-2 shrink-0">
             {/* ADD EXPENSE BUTTON */}
@@ -329,12 +334,30 @@ export const Header: React.FC<HeaderProps> = ({
               <Sparkles className="w-5 sm:w-6 h-5 sm:h-6 animate-pulse" />
             </div>
             <div>
-              <div className="text-[11px] sm:text-xs uppercase tracking-wider text-zinc-400 font-medium">
-                {timeFilter === 'ALL'
-                  ? 'All-Time Total Spend'
-                  : timeFilter === 'THIS_WEEK'
-                  ? "This Week's Spend"
-                  : "This Month's Spend"}
+              <div className="text-[11px] sm:text-xs uppercase tracking-wider text-zinc-400 font-medium flex items-center gap-1.5 flex-wrap">
+                {activeFilter ? (
+                  <>
+                    <span className="text-amber-400 font-bold">
+                      Filtered Spend ({activeFilter.type === 'MEMBER' ? 'Flatmate' : 'Tag'}: {activeFilter.label})
+                    </span>
+                    {onClearFilter && (
+                      <button
+                        onClick={onClearFilter}
+                        className="text-[10px] text-zinc-300 hover:text-white underline cursor-pointer ml-1"
+                      >
+                        (Clear ✕)
+                      </button>
+                    )}
+                  </>
+                ) : (
+                  <span>
+                    {timeFilter === 'ALL'
+                      ? 'All-Time Total Spend'
+                      : timeFilter === 'THIS_WEEK'
+                      ? "This Week's Spend"
+                      : "This Month's Spend"}
+                  </span>
+                )}
               </div>
               <div className="text-xl sm:text-3xl font-extrabold text-white font-mono tracking-tight flex items-baseline gap-1">
                 <span className={isPurple ? 'text-purple-400' : 'text-rose-500'}>₹</span>

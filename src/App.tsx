@@ -428,8 +428,48 @@ export function App() {
     });
   }, [state.expenses, selectedTagFilter, selectedMemberFilter, timeFilter, appMountTime]);
 
-  // Total Group Spend for selected period
-  const totalGroupSpend = filteredExpenses.reduce((sum, e) => sum + e.totalAmount, 0);
+  // Active Filter Description (for Member or Tag)
+  const activeFilter = useMemo<{ type: 'MEMBER' | 'TAG'; label: string } | null>(() => {
+    if (selectedMemberFilter) {
+      const member = state.members.find((m) => m.id === selectedMemberFilter);
+      return { type: 'MEMBER', label: member ? member.name : 'Selected Flatmate' };
+    }
+    if (selectedTagFilter) {
+      return { type: 'TAG', label: selectedTagFilter };
+    }
+    return null;
+  }, [selectedMemberFilter, selectedTagFilter, state.members]);
+
+  const handleClearFilter = useCallback(() => {
+    setSelectedMemberFilter(null);
+    setSelectedTagFilter(null);
+  }, []);
+
+  // Total Group Spend for selected period (safely handles legacy or custom split values)
+  const totalGroupSpend = useMemo(() => {
+    const expensesToSum = activeFilter ? filteredExpenses : state.expenses.filter((e) => {
+      if (timeFilter === 'ALL') return true;
+      const expDate = new Date(e.date);
+      const now = new Date(appMountTime);
+      if (timeFilter === 'THIS_MONTH') {
+        return expDate.getMonth() === now.getMonth() && expDate.getFullYear() === now.getFullYear();
+      }
+      if (timeFilter === 'THIS_WEEK') {
+        const oneWeekAgoMs = appMountTime - 7 * 24 * 60 * 60 * 1000;
+        return expDate.getTime() >= oneWeekAgoMs;
+      }
+      return true;
+    });
+
+    return expensesToSum.reduce((sum, e) => {
+      const amt = typeof e.totalAmount === 'number' && !isNaN(e.totalAmount) && e.totalAmount > 0
+        ? e.totalAmount
+        : (e.splits && e.splits.length > 0
+            ? e.splits.reduce((s, sp) => s + (Number(sp.amount) || 0), 0)
+            : Number(e.totalAmount) || 0);
+      return sum + amt;
+    }, 0);
+  }, [activeFilter, filteredExpenses, state.expenses, timeFilter, appMountTime]);
 
   // Live Balances & Minimized Settlements
   const netBalances = getMemberNetBalances(
@@ -855,6 +895,8 @@ export function App() {
         onOpenNotifications={() => setIsNotificationsOpen(true)}
         userProfile={userProfile}
         onOpenProfile={() => setIsProfileOpen(true)}
+        activeFilter={activeFilter}
+        onClearFilter={handleClearFilter}
       />
 
       {/* Admin Alert: Pending Join Requests Banner */}
@@ -920,26 +962,30 @@ export function App() {
             </div>
           </div>
         ) : (
-          <div className="glass-panel rounded-xl p-3.5 sm:p-4 border border-amber-900/40 bg-amber-950/15 text-xs space-y-3">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5 text-zinc-300">
-                <Radio className="w-4 h-4 text-amber-400 shrink-0 animate-pulse" />
-                <div>
-                  <strong className="text-white block sm:inline">Working in Local Mode:</strong>{' '}
-                  <span className="text-zinc-400">
+          <div className="glass-panel rounded-xl p-3 sm:p-4 border border-amber-900/40 bg-amber-950/15 text-xs space-y-2.5">
+            <div className="flex items-center justify-between gap-2.5">
+              <div className="flex items-center gap-2 text-zinc-300 min-w-0">
+                <Radio className="w-3.5 h-3.5 text-amber-400 shrink-0 animate-pulse" />
+                <div className="text-[11px] sm:text-xs truncate">
+                  <strong className="text-white">Local Mode:</strong>{' '}
+                  <span className="text-zinc-400 hidden xs:inline">
                     Changes are saved only on this device.
+                  </span>
+                  <span className="text-zinc-400 xs:hidden">
+                    Saved on device
                   </span>
                 </div>
               </div>
               <button
                 onClick={() => setIsRoomManagerOpen(true)}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-sm shrink-0 ${
+                className={`px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition-all cursor-pointer shadow-sm shrink-0 whitespace-nowrap ${
                   isPurple
                     ? 'bg-purple-600 text-white hover:bg-purple-500 shadow-purple-950/50'
                     : 'bg-rose-600 text-white hover:bg-rose-500'
                 }`}
               >
-                + Create or Join Shared Flat Room
+                <span className="hidden sm:inline">+ Create or Join Shared Flat Room</span>
+                <span className="sm:hidden">+ Sync Online ⚡</span>
               </button>
             </div>
 
